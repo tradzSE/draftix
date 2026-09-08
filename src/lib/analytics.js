@@ -51,3 +51,25 @@ export function trackPageview(path) {
     }).catch(() => {});
   } catch (_) {}
 }
+
+/** Record a successful, anonymous product action without retaining its input. */
+export function trackProductEvent(eventType) {
+  const cfg = supabaseConfig();
+  if (!cfg || typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") return;
+  try {
+    fetch(`${cfg.url}/rest/v1/rpc/draftix_record_product_event`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: cfg.key,
+        Authorization: `Bearer ${cfg.key}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        p_event_type: String(eventType || ""),
+        p_source_id: crypto.randomUUID(),
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (_) {}
+}

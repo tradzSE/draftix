@@ -16,6 +16,11 @@ const MAX_PER_LOAD = 5;
 const reported = new Set();
 let sentCount = 0;
 
+export function isStaleAssetError(error) {
+    return /failed to fetch dynamically imported module|unable to preload css|failed to preload css|loading chunk|chunkloaderror|preload.*(?:css|module)/i
+        .test(String(error?.message || error || ""));
+}
+
 /** Read the analytics visitor cookie if present (never writes one). */
 function readVisitorId() {
     try {
@@ -39,6 +44,8 @@ export function reportClientError({ kind = "window", message, stack = null, page
 
     const msg = toText(message, 1000);
     if (!msg) return; // resource-load "error" events carry no message
+    if (isStaleAssetError(msg)) return; // handled by the deploy recovery path
+    if (/^script error\.?$/i.test(msg) && !stack) return; // opaque cross-origin WebView script
 
     const key = `${kind}:${msg}`;
     if (reported.has(key)) return; // the same crash firing repeatedly

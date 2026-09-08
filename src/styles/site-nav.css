@@ -338,6 +338,35 @@
   }
 }
 
+/* Compact game-navigation typography: neutral grotesk, firm weight, tracked caps. */
+.site-nav-public,
+.site-nav-landing,
+.site-nav-support,
+.dr-site>.dr-nav,
+.sp-page>.sp-header {
+  --font-nav: Arial, Helvetica, sans-serif;
+}
+
+.site-nav-public .dr-nav-links a:not(.dr-nav-cta),
+.dr-site>.site-nav-landing.dr-nav .dr-nav-links a:not(.dr-nav-cta),
+.sp-page>.sp-header .sp-nav-links a:not(.sp-open) {
+  font-family: var(--font-nav) !important;
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .11em !important;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.site-nav-public .dr-nav-links .dr-nav-cta,
+.dr-site>.site-nav-landing.dr-nav .dr-nav-links .dr-nav-cta,
+.sp-page>.sp-header .sp-nav-links .sp-open {
+  font-family: var(--font-nav) !important;
+  font-weight: 700 !important;
+  letter-spacing: .09em !important;
+  text-transform: uppercase;
+}
+
 /* Shared visitor command bar. Product screens under /draft keep their own shell. */
 .site-nav-public {
   position: sticky !important;

@@ -4979,6 +4979,95 @@
   border-color: #ff4655;
 }
 
+.dx-invite-module {
+  min-width: 0;
+}
+
+.dx-invite-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dx-invite-actions button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: 750 .82rem/1 var(--font-ui);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.dx-invite-actions button:active {
+  transform: translateY(1px) scale(.985);
+}
+
+.dx-invite-actions button:focus-visible {
+  outline: 2px solid #ff4655;
+  outline-offset: 3px;
+}
+
+.dx-invite-actions svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.dx-copy-invite {
+  background: #ff4655;
+  color: #fff;
+  box-shadow: 0 9px 22px rgba(255, 70, 85, .2);
+}
+
+.dx-copy-invite:hover {
+  background: #e83f4e;
+}
+
+.dx-share-invite {
+  border-color: #b8b4ad !important;
+  background: #fff;
+  color: #0f1923;
+}
+
+.dx-share-invite:hover {
+  border-color: #ff4655 !important;
+  background: #fff7f8;
+}
+
+@media (min-width:1051px) {
+  .dx-lobby .dx-invite-module {
+    grid-column: 2;
+    align-self: center;
+    width: 230px;
+  }
+
+  .dx-lobby .dx-invite-module .dx-room-code {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .dx-lobby .dx-invite-actions button {
+    min-height: 40px;
+    padding-inline: 12px;
+    font-size: .73rem;
+  }
+
+  .dx-lobby .dx-share-invite span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 .dx-room-code strong {
   color: #ff4655;
 }

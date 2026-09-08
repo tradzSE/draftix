@@ -1,5 +1,8 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Check } from "@phosphor-icons/react/Check";
+import { Copy } from "@phosphor-icons/react/Copy";
+import { ShareNetwork } from "@phosphor-icons/react/ShareNetwork";
 import { createDraftSocket } from "../socket/draftSocket";
 import {
   draftReducer,
@@ -416,6 +419,8 @@ function Lobby({ session, client, connection }) {
 
   const [notice, setNotice] = useState(null);
   const [noticeShown, setNoticeShown] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteResetRef = useRef(null);
 
   function showNotice({ title, detail, variant }) {
     setNoticeShown(false);
@@ -460,22 +465,54 @@ function Lobby({ session, client, connection }) {
     setNames(session.teamNames || { A: "Team A", B: "Team B" });
   }, [session.teamNames?.A, session.teamNames?.B]);
 
+  useEffect(() => () => window.clearTimeout(inviteResetRef.current), []);
+
   function leave() {
     client?.socket.emit("leaveSession", { code: session.code }, () => {
       window.location.href = "/draft";
     });
   }
 
-  async function copyCode() {
+  function inviteDetails() {
     const url = `${window.location.origin}/draft?code=${session.code}`;
+    const hostSide = session.me?.myTeam;
+    const hostTeam = hostSide && session.teamNames?.[hostSide]?.trim() !== `Team ${hostSide}`
+      ? session.teamNames?.[hostSide]
+      : null;
+    const customTeam = Object.entries(session.teamNames || {})
+      .find(([side, name]) => name?.trim() && name.trim() !== `Team ${side}`)?.[1];
+    const inviter = hostTeam?.trim() || customTeam?.trim() || "A team";
+    return {
+      url,
+      title: `${inviter} invited you to a Valorant draft`,
+      text: `${inviter} invited you to a Valorant draft.\nJoin on Draftix: ${url}\nRoom code: ${session.code}`,
+    };
+  }
+
+  async function copyInvite() {
+    const invite = inviteDetails();
     try {
-      await navigator.clipboard.writeText(url);
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(invite.text);
+      setInviteCopied(true);
+      window.clearTimeout(inviteResetRef.current);
+      inviteResetRef.current = window.setTimeout(() => setInviteCopied(false), 2200);
       showNotice({
         title: "Invite copied",
-        detail: `Room ${session.code} is ready to share`,
+        detail: "Ready to paste in Discord",
       });
     } catch {
-      window.prompt("Copy this room link:", url);
+      window.prompt("Copy this invite:", invite.text);
+    }
+  }
+
+  async function shareInvite() {
+    const invite = inviteDetails();
+    try {
+      await navigator.share({ title: invite.title, text: `${invite.title}.`, url: invite.url });
+      showNotice({ title: "Invite shared", detail: `Room ${session.code}` });
+    } catch (error) {
+      if (error?.name !== "AbortError") copyInvite();
     }
   }
 
@@ -503,15 +540,29 @@ function Lobby({ session, client, connection }) {
               Share the code, seat two captains, launch the veto.
             </p>
           </header>
-          <button
-            className="dx-room-code"
-            onClick={copyCode}
-            title="Copy room link"
-          >
-            <small>Private room code</small>
-            <strong>{session.code}</strong>
-            <span>Click to copy link</span>
-          </button>
+          <div className="dx-invite-module">
+            <button
+              className="dx-room-code"
+              onClick={copyInvite}
+              title="Copy room invitation"
+            >
+              <small>Private room code</small>
+              <strong>{session.code}</strong>
+              <span>Click to copy invite</span>
+            </button>
+            <div className="dx-invite-actions">
+              <button className="dx-copy-invite" type="button" onClick={copyInvite} aria-live="polite">
+                {inviteCopied ? <Check aria-hidden="true" weight="bold" /> : <Copy aria-hidden="true" weight="bold" />}
+                <span>{inviteCopied ? "Copied" : "Copy invite"}</span>
+              </button>
+              {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
+                <button className="dx-share-invite" type="button" onClick={shareInvite} aria-label="Share invitation" title="Share invitation">
+                  <ShareNetwork aria-hidden="true" weight="bold" />
+                  <span>Share</span>
+                </button>
+              )}
+            </div>
+          </div>
           {session.me?.isHost && (
             <div
               className={`dx-host-controls${teamNamesDirty || draftRulesDirty ? " has-unsaved-changes" : ""}`}

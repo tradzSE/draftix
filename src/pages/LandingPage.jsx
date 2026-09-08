@@ -16,9 +16,10 @@ const heroSlides = [
   { src: "/images/Homepage/result.webp", alt: "Draftix match result poster" },
 ];
 
-// Reversible homepage experiment. Switch to "workflow" to restore the
-// existing animated product slideshow without deleting either treatment.
-const HERO_VARIANT = "jett";
+// Reversible homepage experiment. Switch to "jett" for the split key-art
+// treatment or "workflow" for the animated product slideshow; both remain
+// fully implemented.
+const HERO_VARIANT = "stage";
 
 // Reversible motion treatment. Change to "classic" to restore the previous
 // homepage pacing without removing either implementation.
@@ -131,6 +132,67 @@ function HeroArtwork() {
         fetchPriority="high"
       />
     </figure>
+  );
+}
+
+const STAGE_STEP = 5200;
+
+function HeroStage({ slides }) {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, STAGE_STEP);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  const cardPosition = (index) => {
+    const distance = (index - activeSlide + slides.length) % slides.length;
+    if (distance === 0) return "is-active";
+    if (distance === 1) return "is-next";
+    if (distance === 2) return "is-queued";
+    if (distance === slides.length - 1) return "is-previous";
+    return "is-hidden";
+  };
+
+  return (
+    <div className="dr-stage">
+      <div className="dr-stage-backdrop" aria-hidden="true">
+        <img
+          src="/images/Homepage/hero-bg.webp"
+          alt=""
+          width="1672"
+          height="941"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+        />
+      </div>
+      <div className="dr-stage-showcase">
+        <div className="dr-stage-deck" aria-hidden="true">
+          <div className="dr-stage-deck-inner">
+            {slides.map((slide, index) => (
+              <figure
+                className={`dr-stage-card ${cardPosition(index)}`}
+                key={slide.src}
+              >
+                <img
+                  src={slide.src}
+                  alt=""
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  decoding="async"
+                />
+              </figure>
+            ))}
+          </div>
+        </div>
+        <div className="dr-stage-proof"><DailyStat /></div>
+      </div>
+    </div>
   );
 }
 
@@ -247,9 +309,10 @@ export default function LandingPage() {
 
   return <main className={`dr-site${LIVELINESS_VARIANT === "choreographed" ? " dr-liveliness-choreographed" : ""}`}>
     <AppNav variant="public" homeHref="#top" links={navigationLinks} />
-    <section className="dr-hero" id="top">
-      <div className="dr-hero-copy" data-reveal><h1><span className="sr-only">Draftix — </span>Draft together.<br /><span>Play prepared.</span></h1><p>Draftix is a free Valorant drafting and map veto platform for teams, scrims, and tournaments.</p><div className="dr-actions"><a href="/draft" className="dr-button dr-button-primary">Open a room</a><a href="#process" className="dr-button dr-button-secondary">Watch the flow</a></div><DailyStat /></div>
-      {HERO_VARIANT === "jett" ? <HeroArtwork /> : <HeroSlideshow />}
+    <section className={HERO_VARIANT === "stage" ? "dr-hero dr-hero-stage" : "dr-hero"} id="top">
+      {HERO_VARIANT === "stage" && <HeroStage slides={heroSlides} />}
+      <div className="dr-hero-copy" data-reveal><h1><span className="sr-only">Draftix: </span>Draft together.<br /><span>Play prepared.</span></h1><p>Draftix is a free Valorant drafting and map veto platform for teams, scrims, and tournaments.</p><div className="dr-actions"><a href="/draft" className="dr-button dr-button-primary">Open a room</a><a href="#process" className="dr-button dr-button-secondary">Watch the flow</a></div></div>
+      {HERO_VARIANT === "stage" ? null : HERO_VARIANT === "jett" ? <HeroArtwork /> : <HeroSlideshow />}
     </section>
     <section className="dr-agents" id="agents" data-reveal>
       <figure className="dr-agents-media">
@@ -258,7 +321,7 @@ export default function LandingPage() {
       <div className="dr-agents-intro">
         <h2>Your agents</h2>
         <strong>Every lock-in changes the draft.</strong>
-        <p>Ban, pick, and counter around the agents your team actually plays. Draftix runs the full agent veto in one shared room, so your comp leaves the draft ready — not guessed.</p>
+        <p>Ban, pick, and counter around the agents your team actually plays. Draftix runs the full agent veto in one shared room, so your comp leaves the draft ready, not guessed.</p>
         <a href="https://playvalorant.com/en-us/agents/" target="_blank" rel="noreferrer" className="dr-button dr-agents-cta">View all agents</a>
       </div>
     </section>

@@ -187,6 +187,28 @@
   padding: 0 14px;
 }
 
+.tb-results header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.tb-results header button svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.tb-results header button.is-copied,
+.tb-results header button.is-copied:hover {
+  border-color: #16835f;
+  background: #16835f;
+  color: #fff;
+  transform: none;
+}
+
 .tb-rows {
   display: grid;
 }
@@ -1180,10 +1202,6 @@
   line-height: 1.4;
   text-align: left;
   cursor: pointer;
-}
-
-.tb-result-hint::after {
-  content: " â†“";
 }
 
 .tb-result-hint:hover,

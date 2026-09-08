@@ -1,5 +1,5 @@
 import { Component } from "react";
-import { reportRenderError } from "../lib/errorReporter.js";
+import { isStaleAssetError, reportRenderError } from "../lib/errorReporter.js";
 
 export default class AppErrorBoundary extends Component {
   constructor(props) {
@@ -13,7 +13,7 @@ export default class AppErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     if (import.meta.env.DEV) console.error("Draftix render failure", error, info);
-    if (/failed to fetch dynamically imported module|loading chunk|chunkloaderror/i.test(String(error?.message || error))) return;
+    if (isStaleAssetError(error)) return;
     reportRenderError(error, info);
   }
 

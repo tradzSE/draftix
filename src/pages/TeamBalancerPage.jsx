@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Check } from "@phosphor-icons/react/Check";
 import SiteHeader from "../components/SiteHeader.jsx";
 import PublicFooter from "../components/PublicFooter.jsx";
+import { trackProductEvent } from "../lib/analytics.js";
 
 const RANKS = ["Iron 1", "Iron 2", "Iron 3", "Bronze 1", "Bronze 2", "Bronze 3", "Silver 1", "Silver 2", "Silver 3", "Gold 1", "Gold 2", "Gold 3", "Unranked", "Platinum 1", "Platinum 2", "Platinum 3", "Diamond 1", "Diamond 2", "Diamond 3", "Ascendant 1", "Ascendant 2", "Ascendant 3", "Immortal 1", "Immortal 2", "Immortal 3", "Radiant"];
 const RANK_TIER_IDS = {
@@ -21,6 +23,7 @@ const newPlayer = (id) => ({ id, name: "", mmr: 12 });
 const total = (team) => team.reduce((sum, player) => sum + player.mmr, 0);
 
 const ROSTER_KEY = "draftix:balancer";
+const BALANCER_URL = "https://www.draftix.tech/team-balance";
 const MAX_ROSTER_ROWS = 40;
 const defaultPlayers = () => Array.from({ length: 10 }, (_, index) => newPlayer(index + 1));
 
@@ -109,23 +112,37 @@ export default function TeamBalancerPage() {
   const [strategy, setStrategy] = useState(() => loadSaved()?.strategy ?? "rank");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef(null);
   const named = useMemo(() => players.filter((player) => player.name.trim()).map((player) => ({ ...player, name: player.name.trim() })), [players]);
 
   useEffect(() => {
     try { localStorage.setItem(ROSTER_KEY, JSON.stringify({ players, perTeam, strategy })); } catch { /* storage may be unavailable */ }
   }, [players, perTeam, strategy]);
 
+  useEffect(() => () => window.clearTimeout(copyTimerRef.current), []);
+
   const update = (id, field, value) => setPlayers((current) => current.map((player) => player.id === id ? { ...player, [field]: field === "mmr" ? Number(value) : value } : player));
   const run = () => {
     if (named.length < 2) { setError("Add at least two named players."); setResult(null); return; }
     setError("");
     setResult(balance(named, perTeam, strategy));
+    trackProductEvent("team_balance_generated");
   };
   const copy = async () => {
     if (!result) return;
     const lines = [`DRAFTIX ${perTeam}v${perTeam}`, "", "Team A", ...result.teamA.map((p) => `${p.name} (${RANKS[p.mmr]})`), "", "Team B", ...result.teamB.map((p) => `${p.name} (${RANKS[p.mmr]})`)];
     if (result.bench.length) lines.push("", "Bench", ...result.bench.map((p) => `${p.name} (${RANKS[p.mmr]})`));
-    await navigator.clipboard?.writeText(lines.join("\n"));
+    lines.push("", `Balance your lobby: ${BALANCER_URL}`);
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      setCopied(true);
+      trackProductEvent("team_balance_copied");
+      window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 2200);
+    } catch {
+      setCopied(false);
+    }
   };
 
   return <main className="sp-page">
@@ -151,7 +168,7 @@ export default function TeamBalancerPage() {
       </section>
     </div>
     {result && <section className="tb-results" id="balanced-teams">
-      <header><div><h2>Balanced teams</h2><p>MMR difference {Math.abs(total(result.teamA) - total(result.teamB))}</p></div><button onClick={copy}>Copy for Discord</button></header>
+      <header><div><h2>Balanced teams</h2><p>MMR difference {Math.abs(total(result.teamA) - total(result.teamB))}</p></div><button className={copied ? "is-copied" : ""} onClick={copy} aria-live="polite">{copied ? <><Check weight="bold" aria-hidden="true" />Copied</> : "Copy for Discord"}</button></header>
       <div><Team name="Team A" players={result.teamA} side="a" /><Team name="Team B" players={result.teamB} side="b" /></div>
       {result.bench.length > 0 && <section className="tb-bench"><h3>Bench</h3><p>{result.bench.map((player) => player.name).join(", ")}</p></section>}
     </section>}

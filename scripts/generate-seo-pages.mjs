@@ -9,6 +9,29 @@ const template = await readFile(path.join(output, "index.html"), "utf8");
 const origin = "https://www.draftix.tech";
 const image = `${origin}/images/og-1200x630.jpg`;
 
+// Search-console ownership tokens, injected as meta tags on every page.
+// Google's value is base64/hex; Bing's can contain arbitrary characters,
+// so both pass through escapeHtml and a conservative charset allowlist.
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim() || "";
+const bingVerification = process.env.BING_SITE_VERIFICATION?.trim() || "";
+if (googleVerification && !/^[\w:.\-=+/]+$/.test(googleVerification)) {
+  throw new Error("GOOGLE_SITE_VERIFICATION contains unexpected characters; refusing to inject it.");
+}
+if (bingVerification && !/^[\w:.\-=+/]+$/.test(bingVerification)) {
+  throw new Error("BING_SITE_VERIFICATION contains unexpected characters; refusing to inject it.");
+}
+const verificationBlock = [
+  googleVerification && `<meta name="google-site-verification" content="${escapeHtml(googleVerification)}" />`,
+  bingVerification && `<meta name="msvalidate.01" content="${escapeHtml(bingVerification)}" />`,
+].filter(Boolean).join("\n  ");
+const VERIFICATION_RE = /<!-- VERIFICATION:START[\s\S]*?VERIFICATION:END -->/;
+if (!VERIFICATION_RE.test(template)) {
+  throw new Error("index.html is missing the VERIFICATION:START/END marker.");
+}
+if (verificationBlock) {
+  console.log(`Injecting search-engine verification metas${googleVerification && bingVerification ? " (Google + Bing)" : googleVerification ? " (Google)" : " (Bing)"}.`);
+}
+
 const pages = [
   {
     path: "/",
@@ -362,6 +385,7 @@ for (const page of pages) {
   }
   const html = template
     .replace(/<!-- SEO:START -->[\s\S]*?<!-- SEO:END -->/, seoBlock(page))
+    .replace(VERIFICATION_RE, verificationBlock || "<!-- no search-engine verification tokens configured -->")
     .replace("<div id=\"root\"></div>", staticH1(page));
   if (page.path === "/") {
     await writeFile(path.join(output, "index.html"), html);

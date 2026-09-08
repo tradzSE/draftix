@@ -194,6 +194,44 @@ function fmtInt(n) {
   return new Intl.NumberFormat().format(Number(n) || 0);
 }
 
+function DraftFunnel({ data }) {
+  if (!data) return null;
+  const steps = [
+    ["Homepage", data.homepage],
+    ["Create draft", data.createDraft],
+    ["Room created", data.roomCreated],
+    ["Opponent joined", data.opponentJoined],
+    ["Draft started", data.draftStarted],
+    ["Draft completed", data.draftCompleted],
+  ];
+
+  return (
+    <section className="ax-panel ax-funnel" aria-labelledby="ax-funnel-title">
+      <h3 id="ax-funnel-title">
+        <span className="ax-panel-icon" aria-hidden="true">{Icon.grid}</span>
+        Draft funnel
+        <span className="ax-panel-note">Last 7 days</span>
+      </h3>
+      <ol className="ax-funnel-steps">
+        {steps.map(([label, rawValue], index) => {
+          const value = Number(rawValue) || 0;
+          const previous = index ? Number(steps[index - 1][1]) || 0 : 0;
+          const rate = previous > 0 ? Math.round((value / previous) * 100) : null;
+          return (
+            <li key={label}>
+              <span className="ax-funnel-index">{String(index + 1).padStart(2, "0")}</span>
+              <strong>{fmtInt(value)}</strong>
+              <span className="ax-funnel-label">{label}</span>
+              {index > 0 ? <small>{rate === null ? "No prior traffic" : `${rate}% from prior step`}</small> : <small>Unique visitors</small>}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="ax-funnel-note">Visit steps count unique anonymous visitors. Room steps count one immutable milestone per room.</p>
+    </section>
+  );
+}
+
 export default function AdminPage() {
   const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY) || "");
   const [input, setInput] = useState("");
@@ -538,37 +576,42 @@ export default function AdminPage() {
                 <StatCard label="All-time views" value={fmtInt(stats.allTime?.views)} sub={`${fmtInt(stats.allTime?.visitors)} unique visitors`} icon={Icon.infinity} />
               </div> : null}
 
+              {activeView === "overview" || activeView === "rooms" ? <DraftFunnel data={stats.funnel?.last7} /> : null}
+
               {activeView === "overview" || activeView === "rooms" ? <div className="ax-row">
                 {activeView === "overview" ? <DailyChart daily={stats.daily} /> : null}
                 {stats.rooms ? (
                   <section className="ax-panel ax-rooms" id="ax-rooms">
                     <h3>
                       <span className="ax-panel-icon" aria-hidden="true">{Icon.door}</span>
-                      Draft activity
+                      Product activity
                     </h3>
-                    <p className="ax-roomstat-note">Lifetime activity is retained after private rooms expire.</p>
+                    <p className="ax-roomstat-note">Successful actions remain counted after private rooms expire.</p>
                     <div className="ax-roomstat-grid">
                       <div className="ax-roomstat">
                         <span className="ax-roomstat-num">{fmtInt(stats.rooms.created7d)}</span>
                         <span className="ax-roomstat-label">rooms created / 7 days</span>
                       </div>
                       <div className="ax-roomstat">
-                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.createdToday)}</span>
-                        <span className="ax-roomstat-label">rooms created today</span>
+                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.completed30d)}</span>
+                        <span className="ax-roomstat-label">completed drafts / 30 days</span>
                       </div>
                       <div className="ax-roomstat">
-                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.allTimeCreated)}</span>
-                        <span className="ax-roomstat-label">all-time rooms created</span>
+                        <span className="ax-roomstat-num">{fmtInt(stats.productMetrics?.bracketMaker?.created7d ?? stats.tournaments?.created7d)}</span>
+                        <span className="ax-roomstat-label">brackets created / 7 days</span>
                       </div>
                       <div className="ax-roomstat">
-                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.active)}</span>
-                        <span className="ax-roomstat-label">currently active</span>
+                        <span className="ax-roomstat-num">{fmtInt(stats.productMetrics?.teamBalancer?.generated7d)}</span>
+                        <span className="ax-roomstat-label">teams balanced / 7 days</span>
                       </div>
                     </div>
                     <dl className="ax-roomstat-foot">
-                      <div><dt>Completed drafts</dt><dd>{fmtInt(stats.rooms.completed)}</dd></div>
-                      <div><dt>Tournaments created</dt><dd>{fmtInt(stats.tournaments?.allTimeCreated)}</dd></div>
-                      <div><dt>Returning visitors / 7d</dt><dd>{fmtInt(stats.visitors?.returning7d)}</dd></div>
+                      <div><dt>All-time rooms</dt><dd>{fmtInt(stats.rooms.allTimeCreated)}</dd></div>
+                      <div><dt>All-time brackets</dt><dd>{fmtInt(stats.productMetrics?.bracketMaker?.allTimeCreated ?? stats.tournaments?.allTimeCreated)}</dd></div>
+                      <div><dt>All-time balances</dt><dd>{fmtInt(stats.productMetrics?.teamBalancer?.allTimeGenerated)}</dd></div>
+                      <div><dt>Balance copies / 7d</dt><dd>{fmtInt(stats.productMetrics?.teamBalancer?.copied7d)}</dd></div>
+                      <div><dt>Bracket visitors / 7d</dt><dd>{fmtInt(stats.productMetrics?.bracketMaker?.visitors7d)}</dd></div>
+                      <div><dt>Active rooms</dt><dd>{fmtInt(stats.rooms.active)}</dd></div>
                     </dl>
                   </section>
                 ) : null}

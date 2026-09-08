@@ -145,12 +145,69 @@ append-only events are not removed when expired rooms are cleaned up. The first
 run backfills only rooms and tournaments that still exist; counts from rooms
 already deleted before the migration cannot be recovered.
 
+Apply `202609090002_draft_funnel.sql` after it. It adds deduplicated funnel
+milestones and anonymous daily outcome aggregates for completed drafts. The
+public statistics RPC exposes totals and rankings without exposing room codes,
+players, teams, chat, or source room IDs. Drafts completed before this migration
+can contribute to completion totals, but deleted rooms cannot be reconstructed
+for historical agent and map rankings.
+
 Check recent cleanup runs in the Supabase Cron job history. To test the cleanup
 function without waiting for the schedule, run:
 
 ```sql
 select public.draftix_delete_expired_rooms(1000);
 ```
+
+## Search-engine verification (Google / Bing)
+
+Ownership of `draftix.tech` is proven with meta tags injected at build time —
+the tokens never live in the repository.
+
+1. In Google Search Console, add the property `https://www.draftix.tech` and
+   choose the "HTML tag" verification method. Copy the token from the
+   `content="..."` value of the displayed tag.
+2. In Bing Webmaster Tools, add the same site and choose "Meta tag"
+   verification. Copy the token from its `content="..."` value.
+3. Set the tokens as environment variables on the frontend build (Vercel
+   Project → Settings → Environment Variables, or your `.env` for local
+   builds):
+
+   ```text
+   GOOGLE_SITE_VERIFICATION=<token from Search Console>
+   BING_SITE_VERIFICATION=<token from Bing Webmaster Tools>
+   ```
+
+4. Deploy (or run `npm run build`). `scripts/generate-seo-pages.mjs`
+   injects `<meta name="google-site-verification">` and
+   `<meta name="msvalidate.01">` into every prerendered page, and
+   `scripts/verify-seo-output.cjs` fails the build if a configured token is
+   missing from any page.
+5. Return to Search Console / Bing Webmaster Tools and press **Verify**.
+
+Both variables are optional — with neither set, the build produces the same
+output as before and the placeholder comment stays in the HTML.
+
+## HSTS preload decision
+
+The site sends `Strict-Transport-Security: max-age=31536000;
+includeSubDomains` (vercel.json) and does **not** opt into the HSTS preload
+list. This is deliberate:
+
+- Preload submissions are checked against the apex domain. The apex
+  `https://draftix.tech` currently answers with Vercel's automatic redirect
+  response, whose HSTS header lacks `includeSubDomains` — the submission
+  would be rejected today.
+- Preload is effectively permanent (removal takes months and browsers may
+  keep cached entries). It would force every future subdomain — e.g. a
+  revived `api.draftix.tech` — to be HTTPS-only from day one.
+- HTTP already 308-redirects to HTTPS on both hostnames, so the practical
+  protection is already in place.
+
+Revisit only if the apex redirect can serve a compliant header (Vercel
+domain-level HSTS settings) and the domain is committed to HTTPS-only
+subdomains permanently. The Node backend's helmet HSTS
+(server.js) mirrors this: `includeSubDomains`, `preload: false`.
 
 ## Known scaling boundary
 

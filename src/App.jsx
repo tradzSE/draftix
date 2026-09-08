@@ -1,12 +1,11 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import LandingPage from "./pages/LandingPage.jsx";
 import { trackPageview } from "./lib/analytics.js";
+import { isStaleAssetError } from "./lib/errorReporter.js";
 import { subscribeToNavigation, currentLocation } from "./lib/spaRouter.js";
 
 const CHUNK_RECOVERY_KEY = "draftix:chunk-recovery";
 const CHUNK_RECOVERY_COOLDOWN_MS = 30_000;
-const isStaleChunkError = (error) => /failed to fetch dynamically imported module|loading chunk|chunkloaderror/i.test(String(error?.message || error));
-
 function lastChunkRecoveryAttempt() {
   try { return Number(sessionStorage.getItem(CHUNK_RECOVERY_KEY)) || 0; } catch { return 0; }
 }
@@ -19,22 +18,27 @@ function clearChunkRecoveryAttempt() {
   try { sessionStorage.removeItem(CHUNK_RECOVERY_KEY); } catch { /* storage unavailable */ }
 }
 
+function recoverStaleAsset() {
+  const now = Date.now();
+  if (now - lastChunkRecoveryAttempt() < CHUNK_RECOVERY_COOLDOWN_MS) return false;
+  markChunkRecoveryAttempt();
+  const freshUrl = new URL(window.location.href);
+  freshUrl.searchParams.set("refresh", String(now));
+  window.location.replace(freshUrl);
+  return true;
+}
+
 function lazyRoute(load) {
   return lazy(() => load().then((module) => {
     clearChunkRecoveryAttempt();
     return module;
   }).catch((error) => {
-    if (!isStaleChunkError(error)) throw error;
+    if (!isStaleAssetError(error)) throw error;
     // A deploy replaced the hashed chunk this tab was about to load. Reload
     // to pick up the fresh build instead of surfacing an error. The cooldown
     // (instead of a one-shot session flag) keeps repeated deploys working for
     // long-lived tabs while still preventing an infinite reload loop.
-    const now = Date.now();
-    if (now - lastChunkRecoveryAttempt() < CHUNK_RECOVERY_COOLDOWN_MS) throw error;
-    markChunkRecoveryAttempt();
-    const freshUrl = new URL(window.location.href);
-    freshUrl.searchParams.set("refresh", String(now));
-    window.location.replace(freshUrl);
+    if (!recoverStaleAsset()) throw error;
     return new Promise(() => {});
   }));
 }
@@ -78,6 +82,17 @@ export default function App() {
   const path = location.path;
 
   useEffect(() => subscribeToNavigation(() => setLocation(currentLocation())), []);
+
+  useEffect(() => {
+    const handlePreloadError = (event) => {
+      const error = event?.payload || event?.detail || event;
+      if (!isStaleAssetError(error)) return;
+      event.preventDefault?.();
+      recoverStaleAsset();
+    };
+    window.addEventListener("vite:preloadError", handlePreloadError);
+    return () => window.removeEventListener("vite:preloadError", handlePreloadError);
+  }, []);
 
   // Scroll back to the top on client-side route changes (skip the first
   // render so hard loads keep native browser scroll restoration).
