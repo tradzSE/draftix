@@ -1203,21 +1203,56 @@
 }
 
 .ax-app:not(:has(.ax-login-side)) .ax-row>.ax-rooms:only-child {
+  display: block;
+}
+
+.ax-roomstat-note {
+  margin: -0.35rem 0 1rem;
+  color: var(--ad-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.ax-roomstat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.7rem;
 }
 
-.ax-app:not(:has(.ax-login-side)) .ax-row>.ax-rooms:only-child h3 {
-  grid-column: 1 / -1;
-}
-
-.ax-app:not(:has(.ax-login-side)) .ax-row>.ax-rooms:only-child .ax-roomstat {
-  min-height: 140px;
+.ax-app:not(:has(.ax-login-side)) .ax-row>.ax-rooms:only-child .ax-roomstat-grid .ax-roomstat {
+  min-height: 118px;
   justify-content: flex-end;
   padding: 1rem;
   border-radius: 12px;
   background: #f5f4f1;
+}
+
+.ax-roomstat-foot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+}
+
+.ax-roomstat-foot div {
+  min-width: 0;
+}
+
+.ax-roomstat-foot dt {
+  color: var(--ad-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ax-roomstat-foot dd {
+  margin: 0.28rem 0 0;
+  color: var(--ad-text);
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-size: 1.08rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes ax-skeleton {
@@ -2245,6 +2280,11 @@
 }
 
 @media (max-width: 560px) {
+
+  .ax-roomstat-grid,
+  .ax-roomstat-foot {
+    grid-template-columns: 1fr;
+  }
   .err-entry .fb-entry-foot {
     align-items: flex-start;
     flex-direction: column;

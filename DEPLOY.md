@@ -138,6 +138,13 @@ their expiry for two hours whenever a member performs a room action. The
 deletes up to 1,000 expired rooms. Related players and chat messages are removed
 automatically through foreign-key cascades.
 
+The `202609090001_activity_analytics.sql` migration is required for truthful
+acquisition reporting. It records only timestamped product events (room created,
+room completed, tournament created), never room content or player data. These
+append-only events are not removed when expired rooms are cleaned up. The first
+run backfills only rooms and tournaments that still exist; counts from rooms
+already deleted before the migration cannot be recovered.
+
 Check recent cleanup runs in the Supabase Cron job history. To test the cleanup
 function without waiting for the schedule, run:
 

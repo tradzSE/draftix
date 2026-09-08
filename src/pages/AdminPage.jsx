@@ -544,16 +544,32 @@ export default function AdminPage() {
                   <section className="ax-panel ax-rooms" id="ax-rooms">
                     <h3>
                       <span className="ax-panel-icon" aria-hidden="true">{Icon.door}</span>
-                      Draft rooms
+                      Draft activity
                     </h3>
-                    <div className="ax-roomstat">
-                      <span className="ax-roomstat-num">{fmtInt(stats.rooms.total)}</span>
-                      <span className="ax-roomstat-label">total rooms created</span>
+                    <p className="ax-roomstat-note">Lifetime activity is retained after private rooms expire.</p>
+                    <div className="ax-roomstat-grid">
+                      <div className="ax-roomstat">
+                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.created7d)}</span>
+                        <span className="ax-roomstat-label">rooms created / 7 days</span>
+                      </div>
+                      <div className="ax-roomstat">
+                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.createdToday)}</span>
+                        <span className="ax-roomstat-label">rooms created today</span>
+                      </div>
+                      <div className="ax-roomstat">
+                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.allTimeCreated)}</span>
+                        <span className="ax-roomstat-label">all-time rooms created</span>
+                      </div>
+                      <div className="ax-roomstat">
+                        <span className="ax-roomstat-num">{fmtInt(stats.rooms.active)}</span>
+                        <span className="ax-roomstat-label">currently active</span>
+                      </div>
                     </div>
-                    <div className="ax-roomstat">
-                      <span className="ax-roomstat-num">{fmtInt(stats.rooms.today)}</span>
-                      <span className="ax-roomstat-label">created today</span>
-                    </div>
+                    <dl className="ax-roomstat-foot">
+                      <div><dt>Completed drafts</dt><dd>{fmtInt(stats.rooms.completed)}</dd></div>
+                      <div><dt>Tournaments created</dt><dd>{fmtInt(stats.tournaments?.allTimeCreated)}</dd></div>
+                      <div><dt>Returning visitors / 7d</dt><dd>{fmtInt(stats.visitors?.returning7d)}</dd></div>
+                    </dl>
                   </section>
                 ) : null}
               </div> : null}
