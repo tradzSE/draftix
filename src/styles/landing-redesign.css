@@ -2131,14 +2131,6 @@
   clip-path: none;
 }
 
-.dr-site>.dr-hero .dr-button {
-  clip-path: none;
-  border-radius: 8px;
-  font-family: var(--font-ui);
-  letter-spacing: 0;
-  text-transform: none;
-}
-
 @media (max-width:900px) {
   .dr-site>.dr-nav {
     top: 12px;
@@ -4125,7 +4117,7 @@
   min-width: 230px;
   min-height: 64px;
   padding: 0 32px;
-  font-size: 1.05rem;
+  font-size: .86rem;
   line-height: 1;
   white-space: nowrap;
 }
@@ -4159,29 +4151,33 @@
   display: flex;
   width: calc(100% - 24px);
   margin: 13px 12px 0;
-  padding: 14px 18px;
-  border-top: 2px solid #ff4655;
-  background: rgba(247, 245, 241, .96);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .2);
-  color: #26323d;
+  padding: 10px 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, .18);
+  background: transparent;
+  box-shadow: none;
+  color: rgba(255, 255, 255, .78);
 }
 
 .dr-stage-proof .dr-hero-proof {
   width: 100%;
   margin: 0;
-  color: #4c5966;
+  color: rgba(255, 255, 255, .78);
   font-size: clamp(.9rem, 1vw, 1rem);
   line-height: 1.35;
 }
 
 .dr-stage-proof .dr-proof-text {
-  color: #4c5966;
+  color: rgba(255, 255, 255, .78);
   font-weight: 600;
 }
 
 .dr-stage-proof .dr-proof-num {
-  color: #0f1923;
+  color: #fff;
   font-weight: 800;
+}
+
+.dr-stage-proof .dr-proof-divider {
+  background: rgba(255, 255, 255, .22);
 }
 
 @media (min-width: 901px) and (max-height: 700px) {
@@ -4231,7 +4227,7 @@
   .dr-stage-proof {
     width: calc(100% - 16px);
     margin: 10px 8px 0;
-    padding: 12px 14px;
+    padding: 10px 2px 0;
   }
 }
 
