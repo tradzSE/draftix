@@ -248,43 +248,6 @@
   }
 }
 
-/* Keep the homepage command bar light after the shared public-nav theme. */
-.dr-site>.site-nav-landing.dr-nav {
-  border-bottom-color: rgba(15, 25, 35, .2) !important;
-  background: #f3efe8 !important;
-  box-shadow: 0 8px 24px rgba(15, 25, 35, .1) !important;
-  color: #0f1923;
-}
-
-.dr-site>.site-nav-landing.dr-nav .site-nav-links a:not(.dr-nav-cta) {
-  color: #20272d;
-}
-
-.dr-site>.site-nav-landing.dr-nav .site-nav-links a:not(.dr-nav-cta):hover,
-.dr-site>.site-nav-landing.dr-nav .site-nav-links a:not(.dr-nav-cta):focus-visible {
-  background: rgba(255, 255, 255, .72);
-  color: #b72634;
-}
-
-.dr-site>.site-nav-landing.dr-nav .site-nav-menu {
-  border-color: rgba(15, 25, 35, .18);
-  background: #fff;
-}
-
-.dr-site>.site-nav-landing.dr-nav .site-nav-menu span {
-  background: #0f1923;
-}
-
-@media (max-width: 900px) {
-
-  .dr-site>.site-nav-landing.dr-nav .site-nav-links,
-  .dr-site>.site-nav-landing.dr-nav .site-nav-links.is-open {
-    border-color: rgba(15, 25, 35, .16) !important;
-    background: #f3efe8 !important;
-    box-shadow: 0 18px 40px rgba(15, 25, 35, .14);
-  }
-}
-
 /* Public wordmark lock: outranks the legacy single-image brand treatment. */
 .site-nav.site-nav-public>a.site-brand.dr-brand {
   display: inline-flex;
@@ -695,16 +658,6 @@
   border-left-color: rgba(15, 25, 35, .2);
 }
 
-.dr-site>.site-nav-landing.dr-nav .site-nav-links a:not(.dr-nav-cta) {
-  color: #20272d;
-}
-
-.dr-site>.site-nav-landing.dr-nav .site-nav-links a:not(.dr-nav-cta):hover,
-.dr-site>.site-nav-landing.dr-nav .site-nav-links a:not(.dr-nav-cta):focus-visible {
-  background: rgba(255, 255, 255, .72);
-  color: #b72634;
-}
-
 @media (max-width: 900px) {
   .dr-site>.site-nav-landing.dr-nav {
     height: 66px;
@@ -727,21 +680,9 @@
     font-size: 1.25rem;
   }
 
-  .dr-site>.site-nav-landing.dr-nav .site-nav-menu {
-    border-color: rgba(15, 25, 35, .18);
-    background: #fff;
-  }
-
-  .dr-site>.site-nav-landing.dr-nav .site-nav-menu span {
-    background: #0f1923;
-  }
-
   .dr-site>.site-nav-landing.dr-nav .site-nav-links,
   .dr-site>.site-nav-landing.dr-nav .site-nav-links.is-open {
     top: 65px;
-    border-color: rgba(15, 25, 35, .16) !important;
-    background: #f3efe8 !important;
-    box-shadow: 0 18px 40px rgba(15, 25, 35, .14);
   }
 }
 

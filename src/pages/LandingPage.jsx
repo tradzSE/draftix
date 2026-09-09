@@ -16,11 +16,6 @@ const heroSlides = [
   { src: "/images/Homepage/result.webp", alt: "Draftix match result poster" },
 ];
 
-// Reversible homepage experiment. Switch to "jett" for the split key-art
-// treatment or "workflow" for the animated product slideshow; both remain
-// fully implemented.
-const HERO_VARIANT = "stage";
-
 // Reversible motion treatment. Change to "classic" to restore the previous
 // homepage pacing without removing either implementation.
 const LIVELINESS_VARIANT = "choreographed";
@@ -92,46 +87,6 @@ function DailyStat() {
         <span className="dr-proof-text">No signup required</span>
       </div>
     </div>
-  );
-}
-
-function HeroSlideshow() {
-  const total = heroSlides.length;
-  const step = (11 / total).toFixed(2);
-  return <div className="dr-hero-flight">
-    <div className="dr-hero-stream" aria-hidden="true">
-      {heroSlides.map((slide, index) => <figure
-        className="dr-hero-visual"
-        key={slide.src}
-        style={{
-          "--dr-slide-index": index,
-          animationDelay: `calc(${index} * -${step}s)`
-        }}
-      >
-        <img
-          src={slide.src}
-          alt=""
-          fetchPriority={index === 0 ? "high" : "auto"}
-          loading={index === 0 ? "eager" : "lazy"}
-        />
-      </figure>)}
-    </div>
-    <span className="sr-only">Animated preview of the Draftix competitive tools.</span>
-  </div>;
-}
-
-function HeroArtwork() {
-  return (
-    <figure className="dr-hero-jett" data-reveal>
-      <img
-        src="/images/Homepage/hero-bg.webp"
-        alt="Draftix Valorant hero key art"
-        width="1672"
-        height="941"
-        loading="eager"
-        fetchPriority="high"
-      />
-    </figure>
   );
 }
 
@@ -309,10 +264,9 @@ export default function LandingPage() {
 
   return <main className={`dr-site${LIVELINESS_VARIANT === "choreographed" ? " dr-liveliness-choreographed" : ""}`}>
     <AppNav variant="public" homeHref="#top" links={navigationLinks} />
-    <section className={HERO_VARIANT === "stage" ? "dr-hero dr-hero-stage" : "dr-hero"} id="top">
-      {HERO_VARIANT === "stage" && <HeroStage slides={heroSlides} />}
+    <section className="dr-hero dr-hero-stage" id="top">
+      <HeroStage slides={heroSlides} />
       <div className="dr-hero-copy" data-reveal><h1><span className="sr-only">Draftix: </span>Draft together.<br /><span>Play prepared.</span></h1><p>Draftix is a free Valorant drafting and map veto platform for teams, scrims, and tournaments.</p><div className="dr-actions"><a href="/draft" className="dr-button dr-button-primary">Open a room</a><a href="#process" className="dr-button dr-button-secondary">Watch the flow</a></div></div>
-      {HERO_VARIANT === "stage" ? null : HERO_VARIANT === "jett" ? <HeroArtwork /> : <HeroSlideshow />}
     </section>
     <section className="dr-agents" id="agents" data-reveal>
       <figure className="dr-agents-media">

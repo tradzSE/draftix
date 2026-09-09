@@ -6,6 +6,12 @@ const TOKEN_KEY = "dx_admin_token";
 const ADMIN_VIEWS = ["overview", "rooms", "pages", "referrers", "feedback", "errors"];
 
 const ERROR_KIND_LABELS = { render: "Render", window: "Script", unhandledrejection: "Async" };
+const RANGE_OPTIONS = [
+  ["today", "Today"],
+  ["last7", "7D"],
+  ["last30", "30D"],
+  ["allTime", "All Time"],
+];
 
 function viewFromHash() {
   if (typeof window === "undefined") return "overview";
@@ -83,9 +89,9 @@ const Icon = {
   ),
 };
 
-function StatCard({ label, value, sub, icon }) {
+function StatCard({ label, value, sub, icon, tone = "default" }) {
   return (
-    <article className="ax-card">
+    <article className={`ax-card ax-card-${tone}`}>
       <div className="ax-card-top">
         <span className="ax-card-label">{label}</span>
         <span className="ax-card-icon" aria-hidden="true">{icon}</span>
@@ -96,7 +102,10 @@ function StatCard({ label, value, sub, icon }) {
   );
 }
 
-function RankedList({ id, title, icon, pairs, emptyText, linkType }) {
+function RankedList({ id, title, icon, pairs, emptyText, linkType, limit, onViewAll, showShare = false }) {
+  const visiblePairs = limit ? (pairs || []).slice(0, limit) : (pairs || []);
+  const maxValue = Math.max(1, ...visiblePairs.map(([, value]) => Number(value) || 0));
+  const total = visiblePairs.reduce((sum, [, value]) => sum + (Number(value) || 0), 0);
   const itemHref = (key) => {
     if (linkType === "path" && String(key).startsWith("/")) return String(key);
     if (linkType === "host" && /^[a-z0-9.-]+(?::\d+)?$/i.test(String(key))) return `https://${key}`;
@@ -108,16 +117,19 @@ function RankedList({ id, title, icon, pairs, emptyText, linkType }) {
       <h3>
         <span className="ax-panel-icon" aria-hidden="true">{icon}</span>
         {title}
-        {pairs?.length ? <span className="ax-panel-note">Top {pairs.length}</span> : null}
+        {onViewAll ? <button type="button" className="ax-panel-link" onClick={onViewAll}>View all</button> : pairs?.length ? <span className="ax-panel-note">Top {pairs.length}</span> : null}
       </h3>
-      {pairs && pairs.length ? (
+      {visiblePairs.length ? (
         <ul className="ax-list">
-          {pairs.map(([key, value]) => {
+          {visiblePairs.map(([key, value]) => {
             const href = itemHref(key);
             return (
               <li key={key}>
-                {href ? <a href={href} target="_blank" rel="noreferrer">{key}</a> : <span>{key}</span>}
-                <strong>{value}</strong>
+                <div className="ax-list-row">
+                  {href ? <a href={href} target="_blank" rel="noreferrer">{key}</a> : <span>{key}</span>}
+                  <strong>{fmtInt(value)}{showShare && total > 0 ? <small>{Math.round(((Number(value) || 0) / total) * 100)}%</small> : null}</strong>
+                </div>
+                <span className="ax-list-meter" aria-hidden="true"><span style={{ width: `${Math.max(3, Math.round(((Number(value) || 0) / maxValue) * 100))}%` }} /></span>
               </li>
             );
           })}
@@ -130,12 +142,12 @@ function RankedList({ id, title, icon, pairs, emptyText, linkType }) {
 }
 
 /* SVG line chart with gradient area fill, matching the reference layout. */
-function DailyChart({ daily }) {
+function DailyChart({ daily, rangeLabel = "14 days" }) {
   if (!daily || !daily.length) return null;
   const W = 720;
   const H = 240;
   const PAD = { top: 16, right: 12, bottom: 26, left: 44 };
-  const views = daily.map((d) => Number(d.views) || 0);
+  const views = daily.map((d) => Number(d.visitors) || 0);
   const max = Math.max(1, ...views);
   const iw = W - PAD.left - PAD.right;
   const ih = H - PAD.top - PAD.bottom;
@@ -150,14 +162,14 @@ function DailyChart({ daily }) {
     <section className="ax-panel ax-chart-panel">
       <h3>
         <span className="ax-panel-icon">{Icon.grid}</span>
-        Views over time
-        <span className="ax-panel-note">last {daily.length} days</span>
+        Activity over time
+        <span className="ax-panel-note">{rangeLabel}</span>
       </h3>
       <svg
         className="ax-linechart"
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Page views per day, last ${daily.length} days`}
+        aria-label={`Visitors per day, ${rangeLabel}`}
       >
         <defs>
           <linearGradient id="axArea" x1="0" y1="0" x2="0" y2="1">
@@ -194,6 +206,41 @@ function fmtInt(n) {
   return new Intl.NumberFormat().format(Number(n) || 0);
 }
 
+function CompletionCard({ funnel }) {
+  const created = Number(funnel?.roomCreated) || 0;
+  const started = Number(funnel?.draftStarted) || 0;
+  const completed = Number(funnel?.draftCompleted) || 0;
+  const completion = rate(completed, created);
+  return (
+    <section className="ax-panel ax-completion" aria-label={`Draft completion ${completion}%`}>
+      <h3>Draft completion</h3>
+      <div className="ax-ring" style={{ "--ax-progress": `${completion * 3.6}deg` }}><strong>{completion}%</strong></div>
+      <p>{fmtInt(completed)} of {fmtInt(created)} rooms completed</p>
+      <dl><div><dt>Started</dt><dd>{fmtInt(started)}</dd></div><div><dt>Completed</dt><dd>{fmtInt(completed)}</dd></div></dl>
+    </section>
+  );
+}
+
+function ProductHealth({ stats, errors, funnel }) {
+  const created = Number(funnel?.roomCreated) || 0;
+  const joined = Number(funnel?.opponentJoined) || 0;
+  const completed = Number(funnel?.draftCompleted) || 0;
+  const openErrors = errors ? Number(errors.open) || 0 : null;
+  const rows = [
+    ["Live rooms", Number(stats?.rooms?.active) || 0, "good"],
+    ["Open errors", openErrors === null ? "--" : openErrors, openErrors > 0 ? "bad" : "good"],
+    ["Join rate", `${rate(joined, created)}%`, rate(joined, created) < 30 ? "warn" : "good"],
+    ["Completion", `${rate(completed, created)}%`, rate(completed, created) < 25 ? "warn" : "good"],
+  ];
+  return <section className="ax-panel ax-health"><h3>Product health</h3><dl>{rows.map(([label, value, tone]) => <div key={label}><dt><span className={`ax-health-dot is-${tone}`} />{label}</dt><dd>{value}</dd></div>)}</dl></section>;
+}
+
+function rate(part, total) {
+  const numerator = Number(part) || 0;
+  const denominator = Number(total) || 0;
+  return denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
+}
+
 function DraftFunnel({ data }) {
   if (!data) return null;
   const steps = [
@@ -204,30 +251,35 @@ function DraftFunnel({ data }) {
     ["Draft started", data.draftStarted],
     ["Draft completed", data.draftCompleted],
   ];
+  const conversionRates = steps.map(([, rawValue], index) => {
+    if (!index) return null;
+    const previous = Number(steps[index - 1][1]) || 0;
+    return previous > 0 ? Math.round(((Number(rawValue) || 0) / previous) * 100) : null;
+  });
+  const validRates = conversionRates.filter((value) => value !== null);
+  const biggestDropRate = validRates.length ? Math.min(...validRates) : null;
+  const overall = rate(data.draftCompleted, data.homepage);
 
   return (
-    <section className="ax-panel ax-funnel" aria-labelledby="ax-funnel-title">
-      <h3 id="ax-funnel-title">
-        <span className="ax-panel-icon" aria-hidden="true">{Icon.grid}</span>
-        Draft funnel
-        <span className="ax-panel-note">Last 7 days</span>
-      </h3>
+    <section className="ax-panel ax-funnel" aria-label="Draft conversion funnel">
       <ol className="ax-funnel-steps">
         {steps.map(([label, rawValue], index) => {
           const value = Number(rawValue) || 0;
           const previous = index ? Number(steps[index - 1][1]) || 0 : 0;
           const rate = previous > 0 ? Math.round((value / previous) * 100) : null;
           return (
-            <li key={label}>
-              <span className="ax-funnel-index">{String(index + 1).padStart(2, "0")}</span>
-              <strong>{fmtInt(value)}</strong>
-              <span className="ax-funnel-label">{label}</span>
-              {index > 0 ? <small>{rate === null ? "No prior traffic" : `${rate}% from prior step`}</small> : <small>Unique visitors</small>}
+            <li key={label} className={index > 0 && rate === biggestDropRate ? "is-biggest-drop" : ""} style={{ "--ax-funnel-fill": `${Math.max(value > 0 ? 3 : 0, Math.round((value / Math.max(1, Number(steps[0][1]) || 0)) * 100))}%` }}>
+              <div className="ax-funnel-line">
+                <span className="ax-funnel-label">{label}</span>
+                <strong>{fmtInt(value)}</strong>
+              </div>
+              <span className="ax-funnel-meter" aria-hidden="true"><span /></span>
+              <small>{index > 0 ? (rate === null ? "No prior traffic" : `${rate}% step conversion`) : "Unique visitors"}</small>
             </li>
           );
         })}
       </ol>
-      <p className="ax-funnel-note">Visit steps count unique anonymous visitors. Room steps count one immutable milestone per room.</p>
+      <div className="ax-funnel-total"><span>Homepage to completed</span><strong>{overall}%</strong></div>
     </section>
   );
 }
@@ -245,6 +297,7 @@ export default function AdminPage() {
   const [feedback, setFeedback] = useState(null);
   const [errors, setErrors] = useState(null);
   const [errorUpdatingId, setErrorUpdatingId] = useState(null);
+  const [range, setRange] = useState("last7");
 
 
   useEffect(() => {
@@ -292,7 +345,7 @@ export default function AdminPage() {
   // Load the feedback / error feeds when their views open (or token changes).
   useEffect(() => {
     if (token && activeView === "feedback") loadFeedback(token);
-    if (token && activeView === "errors") loadErrors(token);
+    if (token && (activeView === "overview" || activeView === "errors")) loadErrors(token);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, activeView]);
 
@@ -490,6 +543,22 @@ export default function AdminPage() {
     })()
     : null;
 
+  const viewMeta = {
+    overview: ["Overview", "Monitor traffic, draft activity, conversion, and product health."],
+    rooms: ["Draft rooms", "Follow room creation and the full draft conversion funnel."],
+    pages: ["Top pages", "See which Draftix surfaces attract the most visits."],
+    referrers: ["Referrers", "Understand which external sources send traffic to Draftix."],
+    feedback: ["User feedback", "Review ratings and direct notes from players."],
+    errors: ["Client errors", "Triage browser issues reported by the application."],
+  }[activeView];
+
+  const selectedFunnel = stats?.funnel?.[range] || stats?.funnel?.last7 || {};
+  const rangeLabel = RANGE_OPTIONS.find(([key]) => key === range)?.[1] || "7D";
+  const visitorsByRange = range === "today" ? stats?.today?.visitors : range === "last7" ? stats?.last7?.visitors : range === "allTime" ? stats?.allTime?.visitors : null;
+  const roomsByRange = range === "today" ? stats?.rooms?.createdToday : range === "last7" ? stats?.rooms?.created7d : range === "last30" ? stats?.rooms?.created30d : stats?.rooms?.allTimeCreated;
+  const completedByRange = selectedFunnel?.draftCompleted;
+  const overviewDaily = range === "today" ? (stats?.daily || []).slice(-1) : range === "last7" ? (stats?.daily || []).slice(-7) : (stats?.daily || []);
+
   return (
     <div className="ax-app">
       <a className="ax-skip-link" href="#ax-main-content">Skip to dashboard content</a>
@@ -542,13 +611,16 @@ export default function AdminPage() {
           <div className="ax-topbar-title">
             <span className="ax-topbar-icon" aria-hidden="true">{Icon.clock}</span>
             <div>
-              <h1>{activeView === "overview" ? "Overview" : activeView === "rooms" ? "Draft Rooms" : activeView === "pages" ? "Top Pages" : activeView === "feedback" ? "User Feedback" : activeView === "errors" ? "Client Errors" : "Referrers"}</h1>
-              <p>{activeView === "feedback" ? "Ratings and notes from Draftix players." : activeView === "errors" ? "Browser crashes reported by the app." : "Traffic and usage across Draftix."}</p>
+              <h1>{viewMeta[0]}</h1>
+              <p>{viewMeta[1]}</p>
             </div>
           </div>
           <div className="ax-topbar-tools">
+            {activeView === "overview" ? <div className="ax-range" aria-label="Dashboard period">
+              {RANGE_OPTIONS.map(([key, label]) => <button key={key} type="button" className={range === key ? "is-active" : ""} onClick={() => setRange(key)}>{label}</button>)}
+            </div> : null}
             <span className="ax-updated">
-              {tick >= 0 && ago ? `Updated ${ago} / auto-refresh 60s` : null}
+              {tick >= 0 && ago ? `Updated ${ago}` : null}
             </span>
             <button
               type="button"
@@ -568,41 +640,52 @@ export default function AdminPage() {
 
           {stats ? (
             <>
-              {activeView === "overview" ? <div className="ax-cards">
-                <StatCard label="Views today" value={fmtInt(stats.today?.views)} sub="Since midnight UTC" icon={Icon.eye} />
-                <StatCard label="Visitors today" value={fmtInt(stats.today?.visitors)} sub="Unique anonymous visitors" icon={Icon.users} />
-                <StatCard label="Views / 7 days" value={fmtInt(stats.last7?.views)} sub="Rolling week" icon={Icon.calendar} />
-                <StatCard label="Visitors / 7 days" value={fmtInt(stats.last7?.visitors)} sub="Unique this week" icon={Icon.users} />
-                <StatCard label="All-time views" value={fmtInt(stats.allTime?.views)} sub={`${fmtInt(stats.allTime?.visitors)} unique visitors`} icon={Icon.infinity} />
-              </div> : null}
+              {activeView === "overview" ? <>
+                <div className="ax-cards">
+                  <StatCard label="Unique visitors" value={visitorsByRange === null ? "--" : fmtInt(visitorsByRange)} sub={visitorsByRange === null ? "30-day traffic unavailable" : rangeLabel} icon={Icon.users} tone="accent" />
+                  <StatCard label="Draft rooms" value={fmtInt(roomsByRange)} sub="Persistent creation events" icon={Icon.door} />
+                  <StatCard label="Completed drafts" value={fmtInt(completedByRange)} sub={rangeLabel} icon={Icon.grid} />
+                  <StatCard label="Draft completion" value={`${rate(completedByRange, roomsByRange)}%`} sub="Created to completed" icon={Icon.calendar} />
+                  <StatCard label="Live rooms" value={fmtInt(stats.rooms?.active)} sub="Active now" icon={Icon.eye} />
+                </div>
 
-              {activeView === "overview" || activeView === "rooms" ? <DraftFunnel data={stats.funnel?.last7} /> : null}
+                <div className="ax-overview-grid ax-overview-primary">
+                  <div className="ax-chart-wrap"><p className="ax-chart-sub">Traffic during the selected period</p><DailyChart daily={overviewDaily} rangeLabel={range === "last30" || range === "allTime" ? "Latest 14 days" : rangeLabel} /></div>
+                  <CompletionCard funnel={selectedFunnel} />
+                </div>
+              </> : null}
+
+              {activeView === "overview" || activeView === "rooms" ? <>
+                <div className="ax-section-heading ax-section-heading-flow">
+                  <div><span className="ax-section-kicker">Core journey</span><h2>Draft conversion</h2></div>
+                  <span className="ax-period">{activeView === "overview" ? rangeLabel : "7D"}</span>
+                </div>
+                {activeView === "overview" ? <div className="ax-overview-grid ax-overview-secondary"><DraftFunnel data={selectedFunnel} /><ProductHealth stats={stats} errors={errors} funnel={selectedFunnel} /></div> : <DraftFunnel data={stats.funnel?.last7} />}
+              </> : null}
 
               {activeView === "overview" || activeView === "rooms" ? <div className="ax-row">
-                {activeView === "overview" ? <DailyChart daily={stats.daily} /> : null}
                 {stats.rooms ? (
                   <section className="ax-panel ax-rooms" id="ax-rooms">
                     <h3>
                       <span className="ax-panel-icon" aria-hidden="true">{Icon.door}</span>
                       Product activity
                     </h3>
-                    <p className="ax-roomstat-note">Successful actions remain counted after private rooms expire.</p>
                     <div className="ax-roomstat-grid">
                       <div className="ax-roomstat">
                         <span className="ax-roomstat-num">{fmtInt(stats.rooms.created7d)}</span>
-                        <span className="ax-roomstat-label">rooms created / 7 days</span>
+                        <span className="ax-roomstat-label">Rooms created · 7d</span>
                       </div>
                       <div className="ax-roomstat">
                         <span className="ax-roomstat-num">{fmtInt(stats.rooms.completed30d)}</span>
-                        <span className="ax-roomstat-label">completed drafts / 30 days</span>
+                        <span className="ax-roomstat-label">Drafts completed · 30d</span>
                       </div>
                       <div className="ax-roomstat">
                         <span className="ax-roomstat-num">{fmtInt(stats.productMetrics?.bracketMaker?.created7d ?? stats.tournaments?.created7d)}</span>
-                        <span className="ax-roomstat-label">brackets created / 7 days</span>
+                        <span className="ax-roomstat-label">Brackets created · 7d</span>
                       </div>
                       <div className="ax-roomstat">
                         <span className="ax-roomstat-num">{fmtInt(stats.productMetrics?.teamBalancer?.generated7d)}</span>
-                        <span className="ax-roomstat-label">teams balanced / 7 days</span>
+                        <span className="ax-roomstat-label">Teams balanced · 7d</span>
                       </div>
                     </div>
                     <dl className="ax-roomstat-foot">
@@ -620,7 +703,7 @@ export default function AdminPage() {
               {activeView === "feedback" ? <div className="fb-layout">
                 <aside className="fb-summary ax-panel">
                   <div className="fb-average">
-                    <span className="fb-average-num">{feedback?.average != null ? feedback.average : "—"}</span>
+                    <span className="fb-average-num">{feedback?.average != null ? feedback.average : "--"}</span>
                     <span className="fb-average-of">/ 5 average</span>
                     <span className="fb-average-stars" aria-hidden="true">
                       {[1, 2, 3, 4, 5].map((s) => (
@@ -681,7 +764,7 @@ export default function AdminPage() {
               {activeView === "errors" ? <div className="fb-layout">
                 <aside className="fb-summary ax-panel">
                   <div className="fb-average">
-                    <span className="fb-average-num">{errors?.today != null ? fmtInt(errors.today) : "—"}</span>
+                    <span className="fb-average-num">{errors?.today != null ? fmtInt(errors.today) : "--"}</span>
                     <span className="fb-average-of">errors today</span>
                   </div>
                   <dl className="fb-facts">
@@ -750,9 +833,9 @@ export default function AdminPage() {
                 </section>
               </div> : null}
 
-              {activeView === "overview" || activeView === "pages" || activeView === "referrers" ? <div className="ax-row">
-                {activeView === "overview" || activeView === "pages" ? <RankedList id="ax-pages" title="Top pages" icon={Icon.doc} pairs={stats.topPages} emptyText="No pageviews recorded yet." linkType="path" /> : null}
-                {activeView === "overview" || activeView === "referrers" ? <RankedList id="ax-referrers" title="Top referrers" icon={Icon.link} pairs={stats.topReferrers} emptyText="No external referrers yet." linkType="host" /> : null}
+              {activeView === "overview" || activeView === "pages" || activeView === "referrers" ? <div className="ax-row ax-acquisition-row">
+                {activeView === "overview" || activeView === "referrers" ? <RankedList id="ax-referrers" title="Top referrers" icon={Icon.link} pairs={stats.topReferrers} emptyText="No external referrers yet." linkType="host" limit={activeView === "overview" ? 6 : undefined} onViewAll={activeView === "overview" ? () => selectView("referrers") : undefined} /> : null}
+                {activeView === "overview" || activeView === "pages" ? <RankedList id="ax-pages" title="Top pages" icon={Icon.doc} pairs={stats.topPages} emptyText="No pageviews recorded yet." linkType="path" limit={activeView === "overview" ? 5 : undefined} onViewAll={activeView === "overview" ? () => selectView("pages") : undefined} showShare /> : null}
               </div> : null}
             </>
           ) : null}

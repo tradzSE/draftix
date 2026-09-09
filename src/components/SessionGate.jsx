@@ -2,6 +2,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check } from "@phosphor-icons/react/Check";
 import { Copy } from "@phosphor-icons/react/Copy";
+import { LockSimple } from "@phosphor-icons/react/LockSimple";
 import { ShareNetwork } from "@phosphor-icons/react/ShareNetwork";
 import { createDraftSocket } from "../socket/draftSocket";
 import {
@@ -541,15 +542,10 @@ function Lobby({ session, client, connection }) {
             </p>
           </header>
           <div className="dx-invite-module">
-            <button
-              className="dx-room-code"
-              onClick={copyInvite}
-              title="Copy room invitation"
-            >
-              <small>Private room code</small>
+            <div className="dx-room-code">
+              <small><LockSimple aria-hidden="true" weight="bold" />Private room code</small>
               <strong>{session.code}</strong>
-              <span>Click to copy invite</span>
-            </button>
+            </div>
             <div className="dx-invite-actions">
               <button className="dx-copy-invite" type="button" onClick={copyInvite} aria-live="polite">
                 {inviteCopied ? <Check aria-hidden="true" weight="bold" /> : <Copy aria-hidden="true" weight="bold" />}
