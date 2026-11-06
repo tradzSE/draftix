@@ -14,6 +14,33 @@ and production frontend origin you intend to allow in `ALLOWED_ORIGINS`.
 Local development does not require `VITE_SOCKET_URL`; the client uses its own
 origin by default.
 
+When running the Express server locally without the server-only Supabase
+credentials, contact submissions use a per-process in-memory rate limit and
+the configured Formspree endpoint (or the project endpoint by default). This
+development fallback is not used in production; production fails closed
+without the Supabase rate-limit configuration below.
+
+### Vercel contact support form
+
+The `/api/contact` function rate-limits contact submissions by client IP
+(one per 10 minutes and five per 24 hours) before forwarding them to Formspree.
+Before deploying the form, apply migrations
+`supabase/migrations/202609100001_contact_rate_limit.sql` and
+`supabase/migrations/202609100002_contact_rate_limit_cooldown.sql` in order, and
+set these Vercel environment variables for each deployment environment:
+
+```text
+SUPABASE_URL=<your Supabase project URL>
+SUPABASE_SERVICE_ROLE_KEY=<your Supabase service-role key>
+FORMSPREE_ENDPOINT=<your Formspree endpoint URL>
+```
+
+Keep `SUPABASE_SERVICE_ROLE_KEY` server-only: never use a `VITE_` prefix or
+include it in client-side code. The API fails closed if the rate-limit
+configuration or database check is unavailable. Keep Formspree's own spam
+protections enabled as well; requests sent directly to its public form endpoint
+do not pass through Draftix's rate limit.
+
 ### Backend selection
 
 The client supports two draft backends, selected at build time by

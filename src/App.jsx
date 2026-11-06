@@ -53,6 +53,7 @@ const AdminPage = lazyRoute(() => import("./pages/AdminPage.jsx"));
 const SeoTopicPage = lazyRoute(() => import("./pages/SeoTopicPage.jsx"));
 const TournamentPage = lazyRoute(() => import("./pages/TournamentPage.jsx"));
 const FeedbackPage = lazyRoute(() => import("./pages/FeedbackPage.jsx"));
+const ContactPage = lazyRoute(() => import("./pages/ContactPage.jsx"));
 const NotFoundPage = lazyRoute(() => import("./pages/NotFoundPage.jsx"));
 const TournamentHubPage = lazyRoute(() => import("./pages/TournamentPage.jsx").then((module) => ({ default: module.TournamentHubPage })));
 
@@ -119,6 +120,7 @@ export default function App() {
   else if (path === "/r") page = <AdminPage />;
   else if (path === "/tournaments") page = <TournamentHubPage />;
   else if (path === "/feedback") page = <FeedbackPage />;
+  else if (path === "/contact") page = <ContactPage />;
   else if (path.startsWith("/t/") && path.split("/").filter(Boolean).length === 2) page = <TournamentPage slug={decodeURIComponent(path.split("/")[2])} />;
   else if (["/valorant-map-veto", "/valorant-agent-ban", "/valorant-draft-tool", "/tournament-bracket-maker"].includes(path)) page = <SeoTopicPage path={path} />;
   else {
@@ -140,6 +142,7 @@ export default function App() {
       "/tournaments": "Free Tournament Bracket Maker | Draftix",
       "/tournament-bracket-maker": "How to Make a Tournament Bracket (Free) | Draftix",
       "/feedback": "Send Feedback | Draftix",
+      "/contact": "Contact Support | Draftix",
     };
     document.title = titles[path] || (isNotFound ? "Page Not Found | Draftix" : "Valorant Map Veto & Agent Draft Tool | Draftix");
     // First-party analytics: one pageview per route change.

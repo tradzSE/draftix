@@ -590,9 +590,29 @@
     right: 10px;
     left: 10px;
     margin: 0;
+    gap: 0;
+    padding: 8px 12px 12px;
     border-color: rgba(15, 25, 35, .16) !important;
     background: #f3efe8 !important;
     box-shadow: 0 18px 40px rgba(15, 25, 35, .14);
+  }
+
+  .site-nav-public .dr-nav-links a:not(.dr-nav-cta) {
+    min-height: 48px;
+    justify-content: flex-start;
+    padding: 14px 8px;
+    border-bottom: 1px solid rgba(15, 25, 35, .12);
+    border-radius: 0;
+    text-align: left;
+  }
+
+  .site-nav-public .dr-nav-links .dr-nav-cta {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    margin: 12px 0 0;
+    align-self: stretch;
+    justify-content: center;
   }
 
   .site-nav-public .dr-nav-links a:not(.dr-nav-cta)::after,

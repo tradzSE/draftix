@@ -49,6 +49,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://www.draftix.tech/contact</loc>
+    <lastmod>2026-11-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
     <loc>https://www.draftix.tech/status</loc>
     <lastmod>2026-09-03</lastmod>
     <changefreq>daily</changefreq>

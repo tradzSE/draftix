@@ -32,7 +32,7 @@ Live usage — the number of people currently on the site — is visible on the 
 
 ## Contact
 
-- [Email Draftix support](mailto:support@draftix.tech): Product questions, feedback, and support.
+- [Contact Draftix support](https://www.draftix.tech/contact): Send a message through the on-site contact form or send product feedback.
 
 ## Crawling guidance
 

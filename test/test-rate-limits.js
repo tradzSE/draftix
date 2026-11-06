@@ -4,6 +4,9 @@ const { connect, emit, startServer } = require("./helpers");
 (async () => {
   const server = await startServer(3393, {
     ADMIN_STATS_TOKEN: "test-admin-token-that-is-longer-than-24-characters",
+    SUPABASE_URL: "",
+    SUPABASE_SERVICE_ROLE_KEY: "",
+    FORMSPREE_ENDPOINT: "",
   });
   let client;
   let peer;
@@ -55,6 +58,19 @@ const { connect, emit, startServer } = require("./helpers");
     });
     assert.equal(adminBlocked.status, 429);
     assert.equal((await adminBlocked.json()).error, "Too many sign-in attempts. Try again in 15 minutes.");
+
+    const contactResponse = await fetch(`${server.baseUrl}/api/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "test@example.com",
+        topic: "Website issue",
+        message: "A sufficiently long test message.",
+      }),
+    });
+    assert.equal(contactResponse.status, 503);
+    assert.match(contactResponse.headers.get("content-type"), /application\/json/);
+    assert.match((await contactResponse.json()).error, /temporarily unavailable/i);
 
     console.log("PASS rate limits: room creation, chat cooldown, and admin attempts are blocked");
   } finally {

@@ -28,7 +28,7 @@ export default function PublicFooter({ reveal = false }) {
           <h2 className="public-footer-heading">Resources</h2>
           <a href="/status">System status</a>
           <a href="/feedback">Send feedback</a>
-          <a className="public-footer-contact" href="https://mail.google.com/mail/?view=cm&fs=1&to=support%40draftix.tech" target="_blank" rel="noreferrer">Email support</a>
+          <a className="public-footer-contact" href="/contact">Contact support</a>
         </nav>
       </div>
 

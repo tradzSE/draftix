@@ -48,7 +48,7 @@ const pages = [
           name: "Draftix",
           url: `${origin}/`,
           logo: `${origin}/images/draftix.webp`,
-          email: "support@draftix.tech",
+          email: "draftixtech@gmail.com",
           description: "Draftix is a free Valorant drafting and map veto platform for teams, scrims, and tournaments.",
         },
         {
@@ -217,6 +217,12 @@ const pages = [
     socialDescription: "Rate Draftix and share your feedback with the team.",
   },
   {
+    path: "/contact",
+    title: "Contact Support | Draftix",
+    description: "Send a message to Draftix support using the on-site contact form, or share a rating and product suggestion through the feedback page.",
+    socialDescription: "Contact the Draftix team through the on-site form or share product feedback.",
+  },
+  {
     path: "/draft",
     title: "Draft Room | Draftix",
     description: "Create or join a private Draftix room for your Valorant map veto and agent draft.",
@@ -273,6 +279,7 @@ const NAME_BY_PATH = {
   "/privacy": "Privacy Policy",
   "/terms": "Terms of Service",
   "/feedback": "Feedback",
+  "/contact": "Contact Support",
 };
 
 // BreadcrumbList + WebPage nodes appended to every indexable page. The

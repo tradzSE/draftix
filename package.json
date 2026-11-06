@@ -18,7 +18,7 @@
     "video:render": "remotion render remotion/index.jsx DraftixTutorial out/draftix-tutorial.mp4",
     "sync:agents": "node scripts/sync-valorant-agents.mjs",
     "optimize:images": "node scripts/optimize-images.mjs",
-    "test": "node test/test-resume.js && node test/test-draft-ops.js && node test/test-rate-limits.js",
+    "test": "node test/test-resume.js && node test/test-draft-ops.js && node test/test-rate-limits.js && node test/test-contact-api.js",
     "test:supabase": "node scripts/supabase-smoke.js"
   },
   "keywords": [

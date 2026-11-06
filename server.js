@@ -9,6 +9,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const { Server } = require("socket.io");
+const contactHandler = require("./api/contact.js");
 
 // ─── Hard limits (defense-in-depth) ─────────────────────
 const MAX_NICK_LEN = 24;
@@ -1009,6 +1010,8 @@ async function main() {
   });
   app.use(httpLimiter);
 
+  app.post("/api/contact", express.json({ limit: "10kb", strict: true }), contactHandler);
+
   const adminLimiter = rateLimit({
     windowMs: 15 * 60_000,
     max: 10,
@@ -1189,6 +1192,7 @@ async function main() {
     "/privacy",
     "/terms",
     "/feedback",
+    "/contact",
     "/r",
   ];
   app.get(reactPageRoutes, (req, res) => {
