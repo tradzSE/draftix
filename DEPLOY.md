@@ -41,6 +41,17 @@ configuration or database check is unavailable. Keep Formspree's own spam
 protections enabled as well; requests sent directly to its public form endpoint
 do not pass through Draftix's rate limit.
 
+### Supabase setup for a new project
+
+Enable anonymous sign-ins in **Authentication → Sign In / Providers → Anonymous
+Sign-Ins**. Tournament creation and the Supabase draft backend require this
+provider; bracket creation cannot create its owner identity when it is disabled.
+
+Apply every migration in `supabase/migrations` in order. The
+`202611100001_site_pageviews.sql` migration creates the pageview table used by
+first-party analytics. Existing installations can apply this migration alone
+to resolve missing `site_pageviews` REST requests.
+
 ### Backend selection
 
 The client supports two draft backends, selected at build time by

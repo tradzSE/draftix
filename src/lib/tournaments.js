@@ -21,6 +21,10 @@ const supabase = url && key ? createClient(url, key, {
 
 function friendlyTournamentError(error) {
   const message = String(error?.message || error || "").toLowerCase();
+  const code = String(error?.code || "").toLowerCase();
+  if (code === "anonymous_provider_disabled" || message.includes("anonymous sign-ins are disabled")) {
+    return "Bracket creation is unavailable because anonymous sign-ins are disabled in Supabase. Enable Anonymous Sign-Ins under Authentication → Sign In / Providers, then try again.";
+  }
   if (message.includes("not found")) return "This tournament link is unavailable.";
   if (message.includes("organizer access")) return "The organizer link is invalid or has expired.";
   if (message.includes("next match")) return "Clear the later match result before changing this winner.";
