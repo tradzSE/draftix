@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import LandingPage from "./pages/LandingPage.jsx";
+import FloatingDonation from "./components/FloatingDonation.jsx";
 import { trackPageview } from "./lib/analytics.js";
 import { isStaleAssetError } from "./lib/errorReporter.js";
 import { subscribeToNavigation, currentLocation } from "./lib/spaRouter.js";
@@ -150,6 +151,6 @@ export default function App() {
   }, [path, isNotFound]);
 
   // Landing page is already eager; only wrap the lazy routes in Suspense.
-  if (path === "/") return page;
-  return <Suspense fallback={<RouteFallback />}>{page}</Suspense>;
+  if (path === "/") return <>{page}<FloatingDonation /></>;
+  return <><Suspense fallback={<RouteFallback />}>{page}</Suspense><FloatingDonation /></>;
 }

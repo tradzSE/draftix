@@ -1,0 +1,56 @@
+.floating-donation {
+  position: fixed;
+  z-index: 80;
+  left: max(18px, env(safe-area-inset-left));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 15px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 9px;
+  background: #10151d;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .28);
+  color: #fff;
+  font: 700 .8rem/1 var(--font-ui, Inter, sans-serif);
+  text-decoration: none;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.floating-donation svg {
+  flex: 0 0 auto;
+  color: #ff6571;
+}
+
+.floating-donation:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 101, 113, .65);
+  background: #191f29;
+}
+
+.floating-donation:focus-visible {
+  outline: 2px solid #ff6571;
+  outline-offset: 3px;
+}
+
+.floating-donation:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 560px) {
+  .floating-donation {
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    min-height: 44px;
+    padding-inline: 12px;
+    font-size: .75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-donation {
+    transition: none;
+  }
+}
