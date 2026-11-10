@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import AppNav from "./AppNav.jsx";
+import FeedbackPrompt from "./FeedbackPrompt.jsx";
 
 function SelectionGrid({ items, selected, onPick, disabled, kind }) {
   return (
@@ -520,6 +521,8 @@ export default function DraftBoard({ session, client, connection }) {
   const [chatCooldown, setChatCooldown] = useState(0);
   const [musicMuted, setMusicMuted] = useState(false);
   const [matchCountdown, setMatchCountdown] = useState(null);
+  const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
+  const feedbackPreviousPhaseRef = useRef(session.phase);
   const previousPhase = useRef(session.phase);
   const matchPreviousPhaseRef = useRef(session.phase);
   const musicRef = useRef(null);
@@ -562,6 +565,13 @@ export default function DraftBoard({ session, client, connection }) {
     session.me?.isCaptain && session.me?.myTeam === session.currentTurn;
   const canPick =
     isMyTurn && (session.phase === "map_ban" || session.phase === "agent_ban");
+
+  useEffect(() => {
+    if (feedbackPreviousPhaseRef.current !== "done" && session.phase === "done") {
+      setShowFeedbackPrompt(true);
+    }
+    feedbackPreviousPhaseRef.current = session.phase;
+  }, [session.phase]);
 
   useEffect(() => {
     if (!chatReadyAt) {
@@ -1125,13 +1135,16 @@ export default function DraftBoard({ session, client, connection }) {
             />
           )}
           {session.phase === "done" && (
-            <MatchReadyConsole
-              session={session}
-              agents={agents}
-              selectedAgents={selectedAgents}
-              onDownload={downloadSummary}
-              onRematch={() => send("rematchDraft")}
-            />
+            <>
+              <MatchReadyConsole
+                session={session}
+                agents={agents}
+                selectedAgents={selectedAgents}
+                onDownload={downloadSummary}
+                onRematch={() => send("rematchDraft")}
+              />
+              {showFeedbackPrompt && <FeedbackPrompt source="draft" onDismiss={() => setShowFeedbackPrompt(false)} />}
+            </>
           )}
         </section>
         <aside className="dx-chat">

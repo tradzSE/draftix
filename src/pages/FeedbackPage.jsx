@@ -16,8 +16,15 @@ const RATING_LABELS = {
 
 const MIN_RATING = 1;
 const MAX_RATING = 5;
+const FEEDBACK_SOURCES = {
+  draft: "finishing a map and agent draft",
+  bracket: "creating a tournament bracket",
+  teams: "balancing teams",
+};
 
 export default function FeedbackPage() {
+  const source = new URLSearchParams(window.location.search).get("from");
+  const sourceDescription = FEEDBACK_SOURCES[source] || "";
   const [rating, setRating] = useState(0);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent
@@ -62,7 +69,7 @@ export default function FeedbackPage() {
         body: JSON.stringify({
           p_rating: rating,
           p_message: message.trim(),
-          p_page: window.location.pathname,
+          p_page: `${window.location.pathname}${sourceDescription ? `?from=${encodeURIComponent(source)}` : ""}`,
         }),
       });
       if (res.status === 429) {
@@ -96,7 +103,9 @@ export default function FeedbackPage() {
         <header className="seo-topic-hero">
           <h1>Tell us how we're doing.</h1>
           <p className="seo-topic-lead">
-            Rate Draftix and leave a short note. Feedback goes straight to the team — no account needed.
+            {sourceDescription
+              ? `How was ${sourceDescription}? Rate Draftix and leave a short note.`
+              : "Rate Draftix and leave a short note. Feedback goes straight to the team — no account needed."}
           </p>
         </header>
 

@@ -875,9 +875,21 @@
   .tb-roster header button,
   .tb-clear,
   .tb-results header button,
+  .tb-view-results,
+  .tb-dialog-copy,
+  .tb-dialog-close,
   .tb-run,
-  .status-grid article {
+  .status-grid article,
+  .tb-balance-progress span {
     transition: none;
+  }
+
+  .tb-results-dialog[open] {
+    animation: none;
+  }
+
+  .tb-balancing-icon {
+    animation: none;
   }
 }
 
@@ -1189,28 +1201,6 @@
   margin-left: 0;
 }
 
-.tb-result-hint {
-  width: 100%;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 70, 85, .32);
-  border-radius: 4px;
-  background: rgba(255, 70, 85, .08);
-  color: #a92734;
-  font-size: .76rem;
-  font-weight: 700;
-  line-height: 1.4;
-  text-align: left;
-  cursor: pointer;
-}
-
-.tb-result-hint:hover,
-.tb-result-hint:focus-visible {
-  outline: 0;
-  border-color: #ff4655;
-  background: rgba(255, 70, 85, .13);
-}
-
 .tb-results {
   scroll-margin-top: 88px;
 }
@@ -1486,6 +1476,275 @@
 .legal-page section p,
 .legal-page li {
   color: #3e4850;
+}
+
+.tb-run:disabled {
+  cursor: wait;
+  opacity: .7;
+}
+
+.tb-view-results {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 10px;
+  border: 1px solid #b8b4ad;
+  border-radius: 4px;
+  background: #f7f5f1;
+  color: #27333c;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .16s, border-color .16s, background .16s;
+}
+
+.tb-view-results:hover {
+  transform: translateY(-2px);
+  border-color: #6f3540;
+  color: #0f1923;
+}
+
+.tb-view-results:focus-visible,
+.tb-dialog-close:focus-visible,
+.tb-dialog-copy:focus-visible {
+  outline: 2px solid #ff4655;
+  outline-offset: 3px;
+}
+
+.tb-results-dialog {
+  width: min(940px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: min(840px, calc(100dvh - 32px));
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #c9c5be;
+  border-radius: 14px;
+  background: #ece8e1;
+  color: #0f1923;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .38);
+}
+
+.tb-results-dialog::backdrop {
+  background: rgba(15, 25, 35, .76);
+}
+
+.tb-results-dialog[open] {
+  animation: tb-results-enter 220ms cubic-bezier(.16, 1, .3, 1);
+}
+
+@keyframes tb-results-enter {
+  from { opacity: 0; transform: translateY(12px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tb-balancing {
+  display: flex;
+  min-height: 400px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 24px;
+  background: #fff;
+  text-align: center;
+}
+
+.tb-balancing-icon {
+  color: #ff4655;
+  animation: tb-balancer-spin 1.2s linear infinite;
+}
+
+@keyframes tb-balancer-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tb-balancing h2 {
+  margin: 22px 0 0;
+  font: 800 clamp(1.7rem, 4vw, 2.4rem)/1.05 var(--font-display);
+  letter-spacing: -.025em;
+}
+
+.tb-balancing p {
+  display: grid;
+  min-height: 3em;
+  max-width: 34ch;
+  align-items: center;
+  margin: 12px 0 0;
+  color: #3e4850;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.tb-balance-progress {
+  display: grid;
+  width: min(360px, 100%);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 22px;
+}
+
+.tb-balance-progress span {
+  height: 4px;
+  background: #ddd9d2;
+  transition: background .2s ease-out;
+}
+
+.tb-balance-progress span.is-active {
+  background: #ff4655;
+}
+
+.tb-balancing small {
+  margin-top: 16px;
+  color: #626b73;
+  font-size: .78rem;
+}
+
+.tb-results-dialog-content {
+  padding-bottom: 1px;
+}
+
+.tb-results-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 26px 26px 18px;
+  border-bottom: 1px solid #c9c5be;
+}
+
+.tb-results-dialog-header h2 {
+  margin: 0;
+  font: 800 clamp(1.8rem, 4vw, 2.6rem)/1 var(--font-display);
+  letter-spacing: -.025em;
+}
+
+.tb-results-dialog-header p {
+  margin: 8px 0 0;
+  color: #626b73;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+
+.tb-results-dialog-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-dialog-copy,
+.tb-dialog-close {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #0f1923;
+  border-radius: 4px;
+  background: #0f1923;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .16s, border-color .16s, background .16s;
+}
+
+.tb-dialog-copy:hover,
+.tb-dialog-close:hover {
+  transform: translateY(-1px);
+  border-color: #ff4655;
+}
+
+.tb-dialog-copy:hover {
+  background: #182635;
+}
+
+.tb-dialog-copy {
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.tb-dialog-copy svg {
+  width: 17px;
+  height: 17px;
+}
+
+.tb-dialog-copy.is-copied {
+  border-color: #16835f;
+  background: #16835f;
+}
+
+.tb-dialog-copy.is-copied:hover {
+  border-color: #16835f;
+  background: #16835f;
+}
+
+.tb-dialog-close {
+  width: 42px;
+  padding: 0;
+  border-color: #b8b4ad;
+  background: #f7f5f1;
+  color: #27333c;
+}
+
+.tb-dialog-close:hover {
+  background: #fff;
+  color: #0f1923;
+}
+
+.tb-results-dialog-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 26px 0;
+}
+
+.tb-results-dialog .tb-team {
+  border: 1px solid #c9c5be;
+}
+
+.tb-results-dialog .tb-team li em {
+  color: #626b73;
+}
+
+.tb-results-dialog .tb-bench {
+  margin: 18px 26px 0;
+  padding: 16px 0 0;
+  border-top: 1px solid #c9c5be;
+}
+
+.tb-results-dialog .feedback-prompt {
+  width: calc(100% - 52px);
+  margin: 18px 26px 24px;
+}
+
+@media (max-width: 760px) {
+  .tb-results-dialog {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .tb-results-dialog-header {
+    flex-direction: column;
+    padding: 22px 18px 16px;
+  }
+
+  .tb-results-dialog-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tb-results-dialog-teams {
+    grid-template-columns: minmax(0, 1fr);
+    margin: 16px 18px 0;
+  }
+
+  .tb-results-dialog .tb-bench {
+    margin: 16px 18px 0;
+  }
+
+  .tb-results-dialog .feedback-prompt {
+    width: calc(100% - 36px);
+    margin: 16px 18px 18px;
+  }
 }
 
 .sp-footer {

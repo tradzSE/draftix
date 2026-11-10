@@ -13,6 +13,7 @@ import { ShieldCheck } from "@phosphor-icons/react/ShieldCheck";
 import { Trophy } from "@phosphor-icons/react/Trophy";
 import SiteHeader from "../components/SiteHeader.jsx";
 import PublicFooter from "../components/PublicFooter.jsx";
+import FeedbackPrompt from "../components/FeedbackPrompt.jsx";
 import { clearMatchResult, createTournament, getTournament, listMyTournaments, migrateTournamentStorage, registerMyTournament, removeMyTournament, saveTournamentToken, setMatchResult, subscribeToTournament, tournamentToken, updateSeriesScore, updateTournamentFormat } from "../lib/tournaments.js";
 import { navigate } from "../lib/spaRouter.js";
 // Tournament styles ride this lazy chunk instead of the entry bundle.
@@ -170,7 +171,7 @@ export function TournamentHubPage() {
       const result = await createTournament(name, teams.map((team) => team.trim()), bestOf, format, selectedActivity);
       saveTournamentToken(result.slug, result.organizerToken);
       registerMyTournament({ slug: result.slug, name, token: result.organizerToken, format, activity: selectedActivity, teamCount: size });
-      navigate(`/t/${result.slug}`);
+      navigate(`/t/${result.slug}?feedback=bracket-created`);
     } catch (requestError) {
       setError(requestError.message);
       setBusy(false);
@@ -342,8 +343,11 @@ function roundLaneClass(label) {
 }
 
 export default function TournamentPage({ slug }) {
-  const queryToken = new URLSearchParams(window.location.search).get("key") || "";
+  const query = new URLSearchParams(window.location.search);
+  const queryToken = query.get("key") || "";
+  const createdFromHub = query.get("feedback") === "bracket-created";
   const [token] = useState(() => queryToken || tournamentToken(slug));
+  const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(createdFromHub);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [busyMatch, setBusyMatch] = useState("");
@@ -388,12 +392,12 @@ export default function TournamentPage({ slug }) {
   }, [bracketZoom]);
 
   useEffect(() => {
-    if (queryToken) {
-      saveTournamentToken(slug, queryToken);
+    if (queryToken || createdFromHub) {
+      if (queryToken) saveTournamentToken(slug, queryToken);
       window.history.replaceState({}, "", `/t/${slug}`);
     }
     load();
-  }, [load, queryToken, slug]);
+  }, [createdFromHub, load, queryToken, slug]);
   useEffect(() => data?.id ? subscribeToTournament(data.id, load) : undefined, [data?.id, load]);
   useEffect(() => {
     let firstFrame = 0;
@@ -580,7 +584,8 @@ export default function TournamentPage({ slug }) {
         {data.canManage && <div className="tournament-organizer-note"><span className="tournament-organizer-icon"><ShieldCheck aria-hidden="true" /></span><div><strong>Organizer mode</strong><p>Select a winner, enter the score, then save the result.</p></div></div>}
         <div className={`tournament-rail-champion${champion ? " is-decided" : ""}`}><Trophy aria-hidden="true" weight="duotone" /><span>Champion</span><strong>{champion?.name || "To be decided"}</strong>{runnerUp && <small>def. {runnerUp.name} {finalScore}</small>}</div>
       </aside>
-      <section className="tournament-studio-canvas">
+      <section className={`tournament-studio-canvas${showFeedbackPrompt ? " has-feedback-prompt" : ""}`}>
+        {showFeedbackPrompt && <FeedbackPrompt source="bracket" onDismiss={() => setShowFeedbackPrompt(false)} />}
         {error && <p className="tournament-error" role="alert">{error}</p>}
         <section className={`bracket-panel bracket-theme-${bracketTheme}`} aria-labelledby="bracket-heading" ref={bracketPanelRef}>
           <header className="bracket-panel-head">

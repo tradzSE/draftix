@@ -1,0 +1,128 @@
+.feedback-prompt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  width: min(100% - 40px, 1180px);
+  margin: 18px auto;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 12px;
+  background: #151f29;
+  color: #ece8e1;
+  font-family: var(--font-ui, Inter, sans-serif);
+}
+
+.feedback-prompt-icon {
+  color: #ff6571;
+}
+
+.feedback-prompt-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.feedback-prompt-copy strong {
+  font-size: .88rem;
+  line-height: 1.35;
+}
+
+.feedback-prompt-copy span {
+  color: #c3c8ce;
+  font-size: .75rem;
+  line-height: 1.45;
+}
+
+.feedback-prompt > a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 101, 113, .55);
+  border-radius: 7px;
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.feedback-prompt > a:hover {
+  border-color: #ff6571;
+  background: rgba(255, 101, 113, .12);
+}
+
+.feedback-prompt > a:focus-visible,
+.feedback-prompt > button:focus-visible {
+  outline: 2px solid #ff6571;
+  outline-offset: 3px;
+}
+
+.feedback-prompt > button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #c3c8ce;
+  cursor: pointer;
+}
+
+.feedback-prompt > button:hover {
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+}
+
+.dx-draft-main > .feedback-prompt {
+  width: 100%;
+  margin: 18px 0 0;
+}
+
+.tournament-studio-canvas > .feedback-prompt {
+  width: 100%;
+  margin: 0 0 16px;
+}
+
+.tournament-studio-canvas.has-feedback-prompt {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.tournament-studio-canvas.has-feedback-prompt > .bracket-panel {
+  height: auto;
+  min-height: 0;
+}
+
+@media (max-width: 620px) {
+  .feedback-prompt {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    width: calc(100% - 32px);
+    padding: 12px;
+  }
+
+  .feedback-prompt > a {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .feedback-prompt > button {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-prompt *,
+  .feedback-prompt *::before,
+  .feedback-prompt *::after {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}

@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowsClockwise } from "@phosphor-icons/react/ArrowsClockwise";
 import { Check } from "@phosphor-icons/react/Check";
+import { X } from "@phosphor-icons/react/X";
 import SiteHeader from "../components/SiteHeader.jsx";
 import PublicFooter from "../components/PublicFooter.jsx";
+import FeedbackPrompt from "../components/FeedbackPrompt.jsx";
 import { trackProductEvent } from "../lib/analytics.js";
 
 const RANKS = ["Iron 1", "Iron 2", "Iron 3", "Bronze 1", "Bronze 2", "Bronze 3", "Silver 1", "Silver 2", "Silver 3", "Gold 1", "Gold 2", "Gold 3", "Unranked", "Platinum 1", "Platinum 2", "Platinum 3", "Diamond 1", "Diamond 2", "Diamond 3", "Ascendant 1", "Ascendant 2", "Ascendant 3", "Immortal 1", "Immortal 2", "Immortal 3", "Radiant"];
@@ -26,6 +29,13 @@ const ROSTER_KEY = "draftix:balancer";
 const BALANCER_URL = "https://www.draftix.tech/team-balance";
 const MAX_ROSTER_ROWS = 40;
 const defaultPlayers = () => Array.from({ length: 10 }, (_, index) => newPlayer(index + 1));
+const BALANCE_DURATION_MS = 7000;
+const BALANCE_STEPS = [
+  "Checking everyone’s rank and last-game confidence...",
+  "Finding each team a carry (and a convenient excuse)...",
+  "Moving the noobs to the weak side...",
+  "Locking in teams the group chat can’t argue with...",
+];
 
 function loadSaved() {
   try {
@@ -111,8 +121,14 @@ export default function TeamBalancerPage() {
   const [perTeam, setPerTeam] = useState(() => loadSaved()?.perTeam ?? 5);
   const [strategy, setStrategy] = useState(() => loadSaved()?.strategy ?? "rank");
   const [result, setResult] = useState(null);
+  const [isBalancing, setIsBalancing] = useState(false);
+  const [balanceStep, setBalanceStep] = useState(0);
+  const [showResultsDialog, setShowResultsDialog] = useState(false);
+  const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const resultsDialogRef = useRef(null);
+  const runTimersRef = useRef([]);
   const copyTimerRef = useRef(null);
   const named = useMemo(() => players.filter((player) => player.name.trim()).map((player) => ({ ...player, name: player.name.trim() })), [players]);
 
@@ -120,14 +136,49 @@ export default function TeamBalancerPage() {
     try { localStorage.setItem(ROSTER_KEY, JSON.stringify({ players, perTeam, strategy })); } catch { /* storage may be unavailable */ }
   }, [players, perTeam, strategy]);
 
-  useEffect(() => () => window.clearTimeout(copyTimerRef.current), []);
+  useEffect(() => () => {
+    window.clearTimeout(copyTimerRef.current);
+    runTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+  }, []);
 
-  const update = (id, field, value) => setPlayers((current) => current.map((player) => player.id === id ? { ...player, [field]: field === "mmr" ? Number(value) : value } : player));
+  useEffect(() => {
+    const dialog = resultsDialogRef.current;
+    if (!dialog) return;
+    if (showResultsDialog && !dialog.open) {
+      dialog.showModal();
+      if (!isBalancing) dialog.querySelector(".tb-dialog-close")?.focus();
+    } else if (!showResultsDialog && dialog.open) {
+      dialog.close();
+    }
+  }, [showResultsDialog, isBalancing]);
+
+  const clearResult = () => {
+    setResult(null);
+    setShowFeedbackPrompt(false);
+    setShowResultsDialog(false);
+  };
+  const update = (id, field, value) => {
+    clearResult();
+    setPlayers((current) => current.map((player) => player.id === id ? { ...player, [field]: field === "mmr" ? Number(value) : value } : player));
+  };
   const run = () => {
-    if (named.length < 2) { setError("Add at least two named players."); setResult(null); return; }
+    if (named.length < 2) { setError("Add at least two named players."); clearResult(); return; }
+    runTimersRef.current.forEach((timer) => window.clearTimeout(timer));
     setError("");
-    setResult(balance(named, perTeam, strategy));
-    trackProductEvent("team_balance_generated");
+    const nextResult = balance(named, perTeam, strategy);
+    setResult(null);
+    setShowFeedbackPrompt(false);
+    setBalanceStep(0);
+    setIsBalancing(true);
+    setShowResultsDialog(true);
+    const stepDuration = BALANCE_DURATION_MS / BALANCE_STEPS.length;
+    runTimersRef.current = BALANCE_STEPS.slice(1).map((_, index) => window.setTimeout(() => setBalanceStep(index + 1), (index + 1) * stepDuration));
+    runTimersRef.current.push(window.setTimeout(() => {
+      setResult(nextResult);
+      setIsBalancing(false);
+      setShowFeedbackPrompt(true);
+      trackProductEvent("team_balance_generated");
+    }, BALANCE_DURATION_MS));
   };
   const copy = async () => {
     if (!result) return;
@@ -150,28 +201,50 @@ export default function TeamBalancerPage() {
     <section className="sp-intro"><h1>Build fair teams.</h1><p>Add the lobby, choose a format, and split players by rank or at random.</p></section>
     <div className="tb-layout">
       <aside className="tb-controls">
-        <section><h2>Lobby size</h2><div className="tb-options">{[2, 3, 4, 5].map((size) => <button className={perTeam === size ? "is-active" : ""} key={size} onClick={() => setPerTeam(size)}>{size}v{size}</button>)}</div></section>
-        <section><h2>Split method</h2><div className="tb-options">{[["rank", "By rank"], ["random", "Random"]].map(([value, label]) => <button className={strategy === value ? "is-active" : ""} key={value} onClick={() => setStrategy(value)}>{label}</button>)}</div><p>{strategy === "rank" ? "Highest-rated starters are snake drafted for close totals." : "The lobby is shuffled before teams are formed."}</p></section>
-        <button className="tb-run" onClick={run}>Split teams</button>
-        {result && <button type="button" className="tb-result-hint" role="status" onClick={() => document.getElementById("balanced-teams")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Teams are ready. Scroll down to see them.</button>}
+        <section><h2>Lobby size</h2><div className="tb-options">{[2, 3, 4, 5].map((size) => <button className={perTeam === size ? "is-active" : ""} key={size} onClick={() => { clearResult(); setPerTeam(size); }}>{size}v{size}</button>)}</div></section>
+        <section><h2>Split method</h2><div className="tb-options">{[["rank", "By rank"], ["random", "Random"]].map(([value, label]) => <button className={strategy === value ? "is-active" : ""} key={value} onClick={() => { clearResult(); setStrategy(value); }}>{label}</button>)}</div><p>{strategy === "rank" ? "Highest-rated starters are snake drafted for close totals." : "The lobby is shuffled before teams are formed."}</p></section>
+        <button className="tb-run" onClick={run} disabled={isBalancing}>{isBalancing ? "Balancing teams..." : "Split teams"}</button>
+        {result && <button type="button" className="tb-view-results" onClick={() => setShowResultsDialog(true)}>View last result</button>}
         {error && <p className="tb-error">{error}</p>}
       </aside>
       <section className="tb-roster">
-        <header><div><h2>Players</h2><p>{named.length} named | {players.length} rows</p></div><button onClick={() => setPlayers((current) => [...current, newPlayer(Date.now())])}>Add player</button></header>
+        <header><div><h2>Players</h2><p>{named.length} named | {players.length} rows</p></div><button onClick={() => { clearResult(); setPlayers((current) => [...current, newPlayer(Date.now())]); }}>Add player</button></header>
         <div className="tb-rows">{players.map((player, index) => <div className="tb-row" key={player.id}>
           <span>{String(index + 1).padStart(2, "0")}</span>
           <input value={player.name} maxLength="32" placeholder="Player name" aria-label={`Player ${index + 1} name`} onChange={(event) => update(player.id, "name", event.target.value)} />
           <RankSelect value={player.mmr} label={`Player ${index + 1} rank`} onChange={(value) => update(player.id, "mmr", value)} />
-          <button aria-label={`Remove player ${index + 1}`} disabled={players.length <= 5} onClick={() => setPlayers((current) => current.filter((item) => item.id !== player.id))}>Remove</button>
+          <button aria-label={`Remove player ${index + 1}`} disabled={players.length <= 5} onClick={() => { clearResult(); setPlayers((current) => current.filter((item) => item.id !== player.id)); }}>Remove</button>
         </div>)}</div>
-        <button className="tb-clear" onClick={() => { setPlayers(defaultPlayers()); setResult(null); }}>Clear roster</button>
+        <button className="tb-clear" onClick={() => { clearResult(); setPlayers(defaultPlayers()); }}>Clear roster</button>
       </section>
     </div>
-    {result && <section className="tb-results" id="balanced-teams">
-      <header><div><h2>Balanced teams</h2><p>MMR difference {Math.abs(total(result.teamA) - total(result.teamB))}</p></div><button className={copied ? "is-copied" : ""} onClick={copy} aria-live="polite">{copied ? <><Check weight="bold" aria-hidden="true" />Copied</> : "Copy for Discord"}</button></header>
-      <div><Team name="Team A" players={result.teamA} side="a" /><Team name="Team B" players={result.teamB} side="b" /></div>
-      {result.bench.length > 0 && <section className="tb-bench"><h3>Bench</h3><p>{result.bench.map((player) => player.name).join(", ")}</p></section>}
-    </section>}
+    <dialog
+      className="tb-results-dialog"
+      ref={resultsDialogRef}
+      aria-labelledby="tb-results-title"
+      onClose={() => setShowResultsDialog(false)}
+      onCancel={(event) => { if (isBalancing) event.preventDefault(); else setShowResultsDialog(false); }}
+      onClick={(event) => { if (event.target === event.currentTarget && !isBalancing) setShowResultsDialog(false); }}
+    >
+      {isBalancing ? <div className="tb-balancing">
+        <ArrowsClockwise className="tb-balancing-icon" size={34} weight="bold" aria-hidden="true" />
+        <h2 id="tb-results-title">Building your teams...</h2>
+        <p role="status" aria-live="polite">{BALANCE_STEPS[balanceStep]}</p>
+        <div className="tb-balance-progress" aria-hidden="true">{BALANCE_STEPS.map((step, index) => <span className={index <= balanceStep ? "is-active" : ""} key={step} />)}</div>
+        <small>{strategy === "rank" ? "Rank-balanced on paper. Emotionally debatable." : "Randomly split. Blame the algorithm."}</small>
+      </div> : result && <div className="tb-results-dialog-content">
+        <header className="tb-results-dialog-header">
+          <div><h2 id="tb-results-title">Teams are locked.</h2><p>MMR difference {Math.abs(total(result.teamA) - total(result.teamB))} · {perTeam}v{perTeam} · {strategy === "rank" ? "By rank" : "Random"}</p></div>
+          <div className="tb-results-dialog-actions">
+            <button type="button" className={`tb-dialog-copy${copied ? " is-copied" : ""}`} onClick={copy} aria-live="polite">{copied ? <><Check weight="bold" aria-hidden="true" />Copied</> : "Copy for Discord"}</button>
+            <button type="button" className="tb-dialog-close" onClick={() => setShowResultsDialog(false)} aria-label="Close team results"><X size={20} aria-hidden="true" /></button>
+          </div>
+        </header>
+        <div className="tb-results-dialog-teams"><Team name="Team A" players={result.teamA} side="a" /><Team name="Team B" players={result.teamB} side="b" /></div>
+        {result.bench.length > 0 && <section className="tb-bench"><h3>Bench</h3><p>{result.bench.map((player) => player.name).join(", ")}</p></section>}
+        {showFeedbackPrompt && <FeedbackPrompt source="teams" onDismiss={() => setShowFeedbackPrompt(false)} />}
+      </div>}
+    </dialog>
     <PublicFooter />
   </main>;
 }

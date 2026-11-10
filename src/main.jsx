@@ -17,6 +17,7 @@ import "./styles/landing-redesign.css";
 import "./styles/support-pages.css";
 import "./styles/typography.css";
 import "./styles/site-nav.css";
+import "./styles/feedback-prompt.css";
 
 // Surface crashes outside React (event handlers, promises) to the admin
 // error feed. Runs before the first render so nothing is missed.
