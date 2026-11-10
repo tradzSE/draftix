@@ -9,6 +9,11 @@ import FeedbackPrompt from "../components/FeedbackPrompt.jsx";
 import { trackProductEvent } from "../lib/analytics.js";
 
 const RANKS = ["Iron 1", "Iron 2", "Iron 3", "Bronze 1", "Bronze 2", "Bronze 3", "Silver 1", "Silver 2", "Silver 3", "Gold 1", "Gold 2", "Gold 3", "Unranked", "Platinum 1", "Platinum 2", "Platinum 3", "Diamond 1", "Diamond 2", "Diamond 3", "Ascendant 1", "Ascendant 2", "Ascendant 3", "Immortal 1", "Immortal 2", "Immortal 3", "Radiant"];
+const RANK_OPTIONS = RANKS.map((rank, index) => ({ rank, index })).sort((a, b) => {
+  if (a.rank === "Unranked") return -1;
+  if (b.rank === "Unranked") return 1;
+  return a.index - b.index;
+});
 const RANK_TIER_IDS = {
   Unranked: 0,
   "Iron 1": 3, "Iron 2": 4, "Iron 3": 5,
@@ -108,11 +113,11 @@ function RankSelect({ value, label, onChange }) {
   };
 
   return <><select className="tb-rank-native" value={value} aria-label={label} onChange={(event) => onChange(Number(event.target.value))}>
-    {RANKS.map((rank, index) => <option key={rank} value={index}>{rank}</option>)}
+    {RANK_OPTIONS.map(({ rank, index }) => <option key={rank} value={index}>{rank}</option>)}
   </select><details className="tb-rank-select" ref={detailsRef} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) detailsRef.current?.removeAttribute("open"); }}>
     <summary aria-label={`${label}: ${selected}`}><img src={rankIcon(selected)} alt="" loading="lazy" /><span>{selected}</span><i aria-hidden="true" /></summary>
     <div className="tb-rank-menu" role="listbox" aria-label={label}>
-      {RANKS.map((rank, index) => <button type="button" role="option" aria-selected={index === value} className={index === value ? "is-selected" : ""} key={rank} onClick={() => choose(index)}><img src={rankIcon(rank)} alt="" loading="lazy" /><span>{rank}</span></button>)}
+      {RANK_OPTIONS.map(({ rank, index }) => <button type="button" role="option" aria-selected={index === value} className={index === value ? "is-selected" : ""} key={rank} onClick={() => choose(index)}><img src={rankIcon(rank)} alt="" loading="lazy" /><span>{rank}</span></button>)}
     </div>
   </details></>;
 }
