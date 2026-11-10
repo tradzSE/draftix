@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowsClockwise } from "@phosphor-icons/react/ArrowsClockwise";
 import { Check } from "@phosphor-icons/react/Check";
+import { Trash } from "@phosphor-icons/react/Trash";
 import { X } from "@phosphor-icons/react/X";
 import SiteHeader from "../components/SiteHeader.jsx";
 import PublicFooter from "../components/PublicFooter.jsx";
@@ -213,7 +214,7 @@ export default function TeamBalancerPage() {
           <span>{String(index + 1).padStart(2, "0")}</span>
           <input value={player.name} maxLength="32" placeholder="Player name" aria-label={`Player ${index + 1} name`} onChange={(event) => update(player.id, "name", event.target.value)} />
           <RankSelect value={player.mmr} label={`Player ${index + 1} rank`} onChange={(value) => update(player.id, "mmr", value)} />
-          <button aria-label={`Remove player ${index + 1}`} disabled={players.length <= 5} onClick={() => { clearResult(); setPlayers((current) => current.filter((item) => item.id !== player.id)); }}>Remove</button>
+          <button type="button" aria-label={`Remove player ${index + 1}`} title="Remove player" disabled={players.length <= 5} onClick={() => { clearResult(); setPlayers((current) => current.filter((item) => item.id !== player.id)); }}><Trash size={18} weight="regular" aria-hidden="true" /></button>
         </div>)}</div>
         <button className="tb-clear" onClick={() => { clearResult(); setPlayers(defaultPlayers()); }}>Clear roster</button>
       </section>

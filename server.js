@@ -1361,6 +1361,10 @@ async function main() {
       res.type("html");
       return res.sendFile(notFoundHtmlPath);
     }
+    if (fs.existsSync(appHtmlPath)) {
+      res.type("html");
+      return res.sendFile(appHtmlPath);
+    }
     res.type("text/plain").send("Not found");
   });
 

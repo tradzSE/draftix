@@ -4,6 +4,7 @@ import { supabaseConfig } from "../lib/supabaseConfig.js";
 
 const TOKEN_KEY = "dx_admin_token";
 const ADMIN_VIEWS = ["overview", "rooms", "pages", "referrers", "feedback", "errors"];
+const MISSING_ADMIN_RPC_ERROR = "Admin database functions are missing from this Supabase project. Run supabase/analytics.sql and apply the pending database migrations, then try again.";
 
 const ERROR_KIND_LABELS = { render: "Render", window: "Script", unhandledrejection: "Async" };
 const RANGE_OPTIONS = [
@@ -386,6 +387,7 @@ export default function AdminPage() {
         }
         if (unauthorized) setError("That admin token is invalid or expired.");
         else if (res.status === 429) setError("Too many sign-in attempts. Please wait 15 minutes and try again.");
+        else if (res.status === 404) setError(MISSING_ADMIN_RPC_ERROR);
         else setError("Admin metrics are temporarily unavailable. Please try again.");
         return;
       }
@@ -412,7 +414,10 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ p_token: t }),
       });
-      if (!res.ok) return; // keep the last good feed; errors surface via stats banner
+      if (!res.ok) {
+        if (res.status === 404) setError(MISSING_ADMIN_RPC_ERROR);
+        return;
+      }
       setFeedback(await res.json().catch(() => null));
     } catch (_) { /* transient */ }
   }

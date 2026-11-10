@@ -47,10 +47,30 @@ Enable anonymous sign-ins in **Authentication → Sign In / Providers → Anonym
 Sign-Ins**. Tournament creation and the Supabase draft backend require this
 provider; bracket creation cannot create its owner identity when it is disabled.
 
-Apply every migration in `supabase/migrations` in order. The
+For a new project, apply migrations in filename order through
+`202609030004_presence.sql`, then run `supabase/analytics.sql` once, replacing
+its placeholder admin token with your own secret. Apply the remaining files in
+`supabase/migrations` in filename order afterward. `analytics.sql` creates the
+admin configuration and initial stats RPC required by the feedback and client
+error migrations. Apply only migrations that are still missing on an existing
+project.
+
+The admin dashboard's `draftix_admin_stats` and `draftix_admin_errors` RPCs
+must exist in the Supabase project's `public` schema. A REST `404` for either
+RPC means its SQL setup is missing (not that the admin token is wrong). Check
+their presence in the SQL Editor:
+
+```sql
+select
+  to_regprocedure('public.draftix_admin_stats(text)') as admin_stats_rpc,
+  to_regprocedure('public.draftix_admin_errors(text)') as admin_errors_rpc;
+```
+
+Both results should be non-null. If they exist but REST still returns `404`,
+reload the PostgREST schema cache with `notify pgrst, 'reload schema';` and
+confirm Vercel's Supabase URL points to this same project. The
 `202611100001_site_pageviews.sql` migration creates the pageview table used by
-first-party analytics. Existing installations can apply this migration alone
-to resolve missing `site_pageviews` REST requests.
+first-party analytics.
 
 ### Backend selection
 

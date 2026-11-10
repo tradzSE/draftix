@@ -335,15 +335,34 @@
 }
 
 .tb-row button {
+  display: inline-flex;
+  width: 42px;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
   border: 0;
+  border-radius: 4px;
   background: transparent;
   color: #7f8794;
   cursor: pointer;
-  font-size: .76rem;
+  transition: background .16s, color .16s;
+}
+
+.tb-row button:hover:not(:disabled) {
+  background: rgba(255, 70, 85, .1);
+  color: #c62836;
+}
+
+.tb-row button:focus-visible {
+  outline: 2px solid #ff4655;
+  outline-offset: 2px;
 }
 
 .tb-row button:disabled {
-  opacity: .3;
+  color: #9da2aa;
+  cursor: not-allowed;
+  opacity: .65;
 }
 
 .tb-clear {
@@ -3677,10 +3696,11 @@
 
 .notfound-page .nf-visual img {
   width: 100%;
-  height: min(100%, calc(100dvh - 120px));
+  height: min(72dvh, 560px);
   max-width: none;
   object-fit: contain;
   object-position: right center;
+  transform: translateY(-48px);
   filter: none;
 }
 
@@ -3742,6 +3762,7 @@
     height: min(100%, calc(100dvh - 150px));
     object-fit: contain;
     object-position: center top;
+    transform: none;
   }
 
   .notfound-page .nf-visual span {
