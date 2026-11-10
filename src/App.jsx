@@ -152,5 +152,5 @@ export default function App() {
 
   // Landing page is already eager; only wrap the lazy routes in Suspense.
   if (path === "/") return <>{page}<FloatingDonation /></>;
-  return <><Suspense fallback={<RouteFallback />}>{page}</Suspense><FloatingDonation /></>;
+  return <><Suspense fallback={<RouteFallback />}>{page}</Suspense>{path !== "/draft" && <FloatingDonation />}</>;
 }
