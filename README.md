@@ -41,11 +41,14 @@ The real-time room features still require `server.js` on port 3000.
 ```powershell
 npm run build
 npm test
+npx playwright install chromium
+npm run test:smoke
 ```
 
 The integration tests start isolated servers with deterministic catalogs and
 cover reconnect identity, captain authorization, map veto completion, and room
-reset behavior.
+reset behavior. The browser smoke tests use a local Socket.IO room and mocked
+Supabase tournament responses, so they do not write to production services.
 
 ## Environment
 

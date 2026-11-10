@@ -358,7 +358,7 @@ async function loadCatalog() {
       name,
       image: `/images/maps/${name.toLowerCase()}.webp`,
     }));
-    catalog.agents = ["Brimstone", "Jett", "Killjoy", "Omen", "Sage", "Sova"].map((name) => ({
+    catalog.agents = ["Brimstone", "Hush", "Jett", "Killjoy", "Omen", "Sage", "Sova"].map((name) => ({
       uuid: `test-agent-${name.toLowerCase()}`,
       name,
       image: "/images/draftix.webp",

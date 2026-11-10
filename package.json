@@ -19,6 +19,7 @@
     "sync:agents": "node scripts/sync-valorant-agents.mjs",
     "optimize:images": "node scripts/optimize-images.mjs",
     "test": "node test/test-resume.js && node test/test-draft-ops.js && node test/test-rate-limits.js && node test/test-contact-api.js",
+    "test:smoke": "node test/test-browser-smoke.js",
     "test:supabase": "node scripts/supabase-smoke.js"
   },
   "keywords": [
@@ -45,6 +46,7 @@
     "@remotion/cli": "^4.0.520",
     "@vitejs/plugin-react": "^5.0.2",
     "ffmpeg-static": "^5.3.0",
+    "playwright": "^1.65.0",
     "remotion": "^4.0.520",
     "sharp": "^0.35.4",
     "socket.io-client": "^4.8.3",
